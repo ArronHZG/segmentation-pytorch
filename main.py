@@ -23,7 +23,11 @@ class Trainer():
 
 
         # Define network
-        self.model = get_model(self.args.model)
+        self.model = get_model(model_name=self.args.model,
+                               num_classes=self.class_num,
+                               backbone=self.args.backbone,
+                               pretrained=self.args.pretrained,
+                               pretrained_weight_path=self.args.pretrained_weight_path)
 
     def training(self, epoch):
         pass

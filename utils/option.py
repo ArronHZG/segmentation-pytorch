@@ -20,6 +20,10 @@ class Options():
                              help='base image size' )
         parser.add_argument( '--crop-size', type=int, default=512,
                              help='crop image size' )
+        parser.add_argument( '--pretrained', action='store_true', default=False,
+                             help='model name (default: False)' )
+        parser.add_argument( '--pretrained-weight-path', type=str, default=None,
+                             help='model name (default: None)' )
         # training hyper params
 
         # parser.add_argument('--aux', action='store_true', default= False,
