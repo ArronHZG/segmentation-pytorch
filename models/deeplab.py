@@ -9,7 +9,7 @@ from models.nn.sync_batchnorm import SynchronizedBatchNorm2d
 
 
 class DeepLab(nn.Module):
-    def __init__(self, backbone='resnet', output_stride=16, num_classes=21,
+    def __init__(self, backbone='resnet.txt', output_stride=16, num_classes=21,
                  sync_bn=True, freeze_bn=False):
         super(DeepLab, self).__init__()
         if backbone == 'drn':

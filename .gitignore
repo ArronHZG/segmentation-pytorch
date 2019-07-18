@@ -1,1 +1,3 @@
 run/
+/pretrain_models/
+*.pyc
