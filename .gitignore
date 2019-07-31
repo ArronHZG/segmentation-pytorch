@@ -1,2 +1,4 @@
 run/
 .idea/
+/pretrain_models/
+*.pyc
