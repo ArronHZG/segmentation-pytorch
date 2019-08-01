@@ -10,7 +10,7 @@ class Path():
         elif dataset == 'coco':
             return '/home/arron/Documents/arron/dataSet/coco'
         elif dataset == 'rssrai':
-            return '/home/arron/Documents/grey/rssrai'
+            return '/home/arron/Documents/grey/Project_Rssrai/rssrai'
         else:
             print( 'Dataset {} not available.'.format( dataset ) )
             raise NotImplementedError
