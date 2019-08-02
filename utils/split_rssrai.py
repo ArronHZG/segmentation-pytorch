@@ -105,12 +105,55 @@ def split_image(image_path, image_name, save_path, mode, output_image_h_w=(256, 
         split_image_size = (output_image_h_w[0], output_image_h_w[1], 4)
     elif mode == "RGB":
         split_image_size = (output_image_h_w[0], output_image_h_w[1], 3)
-    for h in range( np_image_size[0] // output_image_h_w[1] ):
+    for h in range( np_image_size[0] // output_image_h_w[0] ):
         for w in range( np_image_size[1] // output_image_h_w[1] ):
             little_image = np_image[split_image_size[0] * h:split_image_size[0] * (h + 1),
                            split_image_size[1] * w:split_image_size[1] * (w + 1), :]
             assert little_image.shape == split_image_size
             save_image( little_image, save_path, f'{save_name}_{h}_{w}.{suffix}', mode=mode )
+
+    # 当高不够时的边界保存
+    if np_image_size[0] % output_image_h_w[0] != 0:
+        print( "当高不够时的边界保存" )
+        h = np_image_size[0] // output_image_h_w[0]
+        for w in range( np_image_size[1] // output_image_h_w[1] ):
+            little_image = np_image[-split_image_size[0]:,
+                           split_image_size[1] * w:split_image_size[1] * (w + 1), :]
+            assert little_image.shape == split_image_size
+            save_image( little_image, save_path, f'{save_name}_{h}_{w}.{suffix}', mode=mode )
+
+    # 当宽不够时的边界保存
+
+    if np_image_size[1] % output_image_h_w[1] != 0:
+        print( "当宽不够时的边界保存" )
+        w = np_image_size[1] // output_image_h_w[1]
+        for h in range( np_image_size[0] // output_image_h_w[0] ):
+            little_image = np_image[split_image_size[0] * h:split_image_size[0] * (h + 1),
+                           -split_image_size[1]:, :]
+            assert little_image.shape == split_image_size
+            save_image( little_image, save_path, f'{save_name}_{h}_{w}.{suffix}', mode=mode )
+
+    # 保存左下角,三种情况
+    if np_image_size[0] % output_image_h_w[0] != 0 and np_image_size[1] % output_image_h_w[1] != 0:
+        h = np_image_size[0] // output_image_h_w[0]
+        w = np_image_size[1] // output_image_h_w[1]
+        little_image = np_image[-split_image_size[0]:, -split_image_size[1]:, :]
+        assert little_image.shape == split_image_size
+        save_image( little_image, save_path, f'{save_name}_{h}_{w}.{suffix}', mode=mode )
+
+    if np_image_size[0] % output_image_h_w[0] == 0 and np_image_size[1] % output_image_h_w[1] != 0:
+        h = np_image_size[0] // output_image_h_w[0] - 1
+        w = np_image_size[1] // output_image_h_w[1]
+        little_image = np_image[-split_image_size[0]:, -split_image_size[1]:, :]
+        assert little_image.shape == split_image_size
+        save_image( little_image, save_path, f'{save_name}_{h}_{w}.{suffix}', mode=mode )
+
+    if np_image_size[0] % output_image_h_w[0] != 0 and np_image_size[1] % output_image_h_w[1] == 0:
+        h = np_image_size[0] // output_image_h_w[0]
+        w = np_image_size[1] // output_image_h_w[1] - 1
+        little_image = np_image[-split_image_size[0]:, -split_image_size[1]:, :]
+        assert little_image.shape == split_image_size
+        save_image( little_image, save_path, f'{save_name}_{h}_{w}.{suffix}', mode=mode )
 
 
 def save_image(np_image, path, name, mode="RGB"):
@@ -170,8 +213,6 @@ def test_spilt_valid_image():
     name_list = df["name"].values.tolist()
     for label_name in tqdm( name_list ):
         image_name = label_name.replace( "_label", "" )
-        # print(image_name)
-        # print(label_name)
         split_image( image_label_path, label_name, save_label_path, mode="RGB" )
         split_image( image_path, image_name, save_image_path, mode="CMYK" )
 
