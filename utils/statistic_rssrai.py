@@ -136,7 +136,7 @@ def test_valid_label():
     print( name_list )
     all_statistic_list = []
     base_path = Path.db_root_dir( "rssrai" )
-    image_path = os.path.join( base_path, "split_valid", "label" )
+    image_path = os.path.join( base_path, "split_train", "label" )
     from glob import glob
     image_list = glob( os.path.join( image_path, "*.tif" ) )
     # 多进程
@@ -151,7 +151,7 @@ def test_valid_label():
 
     df = pd.DataFrame( all_statistic_list, columns=name_list )
     print( df )
-    df.to_csv( os.path.join( base_path, "valid_label.csv" ) )
+    df.to_csv( os.path.join( "valid_label.csv" ) )
 
 
 if __name__ == '__main__':
