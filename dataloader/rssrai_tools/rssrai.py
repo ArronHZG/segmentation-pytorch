@@ -71,7 +71,9 @@ class Rssrai( data.Dataset ):
             sample = self._random_crop( sample )
             return sample
         if self.type == 'valid':
-            pass
+            sample = self._read_file( self._label_name_list[index] )
+            sample = self._random_crop( sample )
+            return sample
         if self.type == 'test':
             pass
         return 1, 2
@@ -107,12 +109,11 @@ class Rssrai( data.Dataset ):
 
 
 def testData():
+    test_path = os.path.join( Path().db_root_dir( "rssrai" ), "测试输出" )
+    if not os.path.exists( test_path ):
+        os.makedirs( test_path )
 
-    test_path = os.path.join(Path().db_root_dir("rssrai"),"测试输出")
-    if not os.path.exists(test_path):
-        os.makedirs(test_path)
-
-    rssrai = Rssrai()
+    rssrai = Rssrai(type="valid")
     for i in rssrai:
         pprint( i["image"].shape )
         pprint( i["label"].shape )
