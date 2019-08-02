@@ -301,11 +301,11 @@ if __name__ == "__main__":
     from pprint import pprint
     from utils.model_size import show_model
 
-    model = resnet50(pretrained=True,se=True)
-    input = torch.rand(1, 3, 512, 512)
+    model = resnet50(pretrained=True, dilated=8)
+    input = torch.rand(1, 3, 256, 256)
     output = model(input)
     print(output.size())
-    show_model(model, "resnet50", input_zise=(3, 512, 512))
+    show_model(model, "resnet50", input_zise=(3, 256, 256))
 
     # entrypoints = torch.hub.list('pytorch/vision', force_reload=True)
     # pprint(entrypoints)
