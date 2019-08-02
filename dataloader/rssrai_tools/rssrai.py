@@ -34,17 +34,19 @@ class Rssrai( data.Dataset ):
 
         # 加载数据
         if self.type == 'train':
-            train_csv = os.path.join( self._base_dir, 'train_name.csv' )
-            self._label_name_list = pd.read_csv( train_csv )["name"].values.tolist()
+            train_csv = os.path.join( self._base_dir, 'train_set.csv' )
+            self._label_name_list = pd.read_csv( train_csv )["文件名"].values.tolist()
 
             self._image_dir = os.path.join( self._base_dir, 'split_train', 'img' )
             self._label_dir = os.path.join( self._base_dir, 'split_train', 'label' )
 
-            self.len = 30000
+            self.len = 32000
 
         if self.type == 'valid':
-            valid_csv = os.path.join( self._base_dir, 'valid_name.csv' )
-            self._label_name_list = pd.read_csv( valid_csv )["name"].values.tolist()
+            self._label_path_list = glob( os.path.join( self._base_dir, 'split_valid','label','*.tif'))
+
+            self._label_name_list=[name.split('/')[-1] for name in self._label_path_list]
+            # self._label_name_list = pd.read_csv( valid_csv )["文件名"].values.tolist()
             self._image_dir = os.path.join( self._base_dir, 'split_valid', 'img' )
             self._label_dir = os.path.join( self._base_dir, 'split_valid', 'label' )
 
@@ -72,7 +74,6 @@ class Rssrai( data.Dataset ):
             return sample
         if self.type == 'valid':
             sample = self._read_file( self._label_name_list[index] )
-            sample = self._random_crop( sample )
             return sample
         if self.type == 'test':
             pass
@@ -83,7 +84,7 @@ class Rssrai( data.Dataset ):
         compose = A.Compose( [aug], additional_targets={'image': 'image', 'label': 'mask'} )
         return compose( **sample )
 
-    @functools.lru_cache( maxsize=None )
+    # @functools.lru_cache( maxsize=None )
     def _read_file(self, label_name):
         image_name = label_name.replace( "_label", "" )
         image_pil = Image.open( os.path.join( self._image_dir, image_name ) )
