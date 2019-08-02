@@ -209,8 +209,9 @@ def test_spilt_valid_image():
     image_path = os.path.join( base_path, "split_train", "img" )
 
     import pandas as pd
-    df = pd.read_csv( "valid_image_source.csv" )
-    name_list = df["name"].values.tolist()
+    df = pd.read_csv( "valid_set.csv" )
+    name_list = df["文件名"].values.tolist()
+    print(name_list)
     for label_name in tqdm( name_list ):
         image_name = label_name.replace( "_label", "" )
         split_image( image_label_path, label_name, save_label_path, mode="RGB" )
@@ -218,5 +219,5 @@ def test_spilt_valid_image():
 
 
 if __name__ == '__main__':
-    test_spilt_train_image()
-    # test_spilt_valid_image()
+    # test_spilt_train_image()
+    test_spilt_valid_image()
