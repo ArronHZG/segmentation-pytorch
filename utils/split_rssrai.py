@@ -4,10 +4,7 @@ from pprint import pprint
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-
 from utils.mypath import Path
-import re
-import unittest
 
 
 def split_train_image(image_path, image_name, save_path, mode):
@@ -110,12 +107,13 @@ def testOneLabel():
 
 def test_spilt_all_label():
     base_path = Path.db_root_dir( "rssrai" )
-    save_path = os.path.join( base_path, "split", "label" )
+    save_path = os.path.join( base_path, "split_train", "label" )
     if not os.path.exists( save_path ):
         os.makedirs( save_path )
     image_path = os.path.join( base_path, "train", "label", )
     from glob import glob
     image_list = glob( os.path.join( image_path, "*.tif" ) )
+    print(image_list)
     for image in tqdm( image_list ):
         list = image.split( "/" )
         path = "/".join( list[:-1] )
@@ -143,7 +141,7 @@ def test_spilt_valid_image():
 
 
     import pandas as pd
-    df = pd.read_csv("/home/arron/PycharmProjects/segmentation-pytorch/data/valid_image.csv")
+    df = pd.read_csv("valid_image_source.csv")
     name_list = df["name"].values.tolist()
     for label_name in tqdm( name_list ):
         image_name = label_name.replace("_label","")
@@ -154,5 +152,5 @@ def test_spilt_valid_image():
 
 if __name__ == '__main__':
     # test_spilt_all_image()
-    # test_spilt_all_label()
-    test_spilt_valid_image()
+    test_spilt_all_label()
+    # test_spilt_valid_image()
