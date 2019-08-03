@@ -5,57 +5,57 @@ import torch
 
 class Options():
     def __init__(self):
-        parser = argparse.ArgumentParser( description='PyTorch \
-            Segmentation' )
+        parser = argparse.ArgumentParser(description='PyTorch \
+            Segmentation')
         # model and dataset
-        parser.add_argument( '--model', type=str, default='deepLabV3+',
-                             help='model name (default: deepLabV3+)' )
-        parser.add_argument( '--backbone', type=str, default='resnet50',
-                             help='backbone name (default: resnet50)' )
-        parser.add_argument( '--dataset', type=str, default='rssrai',
-                             help='dataset name (default: rssrai)' )
-        parser.add_argument( '--workers', type=int, default=8,
-                             metavar='N', help='dataloader threads' )
-        parser.add_argument( '--base-size', type=int, default=512,
-                             help='base image size' )
-        parser.add_argument( '--crop-size', type=int, default=512,
-                             help='crop image size' )
-        parser.add_argument( '--pretrained', action='store_true', default=False,
-                             help='model name (default: False)' )
-        parser.add_argument( '--pretrained-weight-path', type=str, default=None,
-                             help='model name (default: None)' )
+        parser.add_argument('--model', type=str, default='deepLabV3+',
+                            help='model name (default: deepLabV3+)')
+        parser.add_argument('--backbone', type=str, default='resnet50',
+                            help='backbone name (default: resnet50)')
+        parser.add_argument('--dataset', type=str, default='rssrai',
+                            help='dataset name (default: rssrai)')
+        parser.add_argument('--workers', type=int, default=8,
+                            metavar='N', help='dataloader threads')
+        parser.add_argument('--base-size', type=int, default=512,
+                            help='base image size')
+        parser.add_argument('--crop-size', type=int, default=512,
+                            help='crop image size')
+        parser.add_argument('--pretrained', action='store_true', default=False,
+                            help='model name (default: False)')
+        parser.add_argument('--pretrained-weight-path', type=str, default=None,
+                            help='model name (default: None)')
         # training hyper params
 
         # parser.add_argument('--aux', action='store_true', default= False,
         #                     help='Auxilary Loss')
         # parser.add_argument('--se-loss', action='store_true', default= False,
         #                     help='Semantic Encoding Loss SE-loss')
-        parser.add_argument( '--epochs', type=int, default=None, metavar='N',
-                             help='number of epochs to train (default: auto)' )
-        parser.add_argument( '--start_epoch', type=int, default=0,
-                             metavar='N', help='start epochs (default:0)' )
-        parser.add_argument( '--batch-size', type=int, default=64,
-                             metavar='N', help='input batch size for training (default: auto)' )
-        parser.add_argument( '--test-batch-size', type=int, default=None,
-                             metavar='N', help='input batch size for \
-                            testing (default: same as batch size)' )
+        parser.add_argument('--epochs', type=int, default=None, metavar='N',
+                            help='number of epochs to train (default: auto)')
+        parser.add_argument('--start_epoch', type=int, default=0,
+                            metavar='N', help='start epochs (default:0)')
+        parser.add_argument('--batch-size', type=int, default=64,
+                            metavar='N', help='input batch size for training (default: auto)')
+        parser.add_argument('--test-batch-size', type=int, default=None,
+                            metavar='N', help='input batch size for \
+                            testing (default: same as batch size)')
         # optimizer params
-        parser.add_argument( '--loss', type=str, default="SGD",
-                             help='learning rate (default: auto)' )
-        parser.add_argument( '--lr', type=float, default=None, metavar='LR',
-                             help='learning rate (default: auto)' )
-        parser.add_argument( '--lr-scheduler', type=str, default='poly',
-                             help='learning rate scheduler (default: poly)' )
-        parser.add_argument( '--lr-step', type=int, default=None,
-                             help='lr step to change lr' )
-        parser.add_argument( '--momentum', type=float, default=0.9,
-                             metavar='M', help='momentum (default: 0.9)' )
-        parser.add_argument( '--weight-decay', type=float, default=1e-4,
-                             metavar='M', help='w-decay (default: 1e-4)' )
+        parser.add_argument('--loss', type=str, default="SGD",
+                            help='learning rate (default: auto)')
+        parser.add_argument('--lr', type=float, default=None, metavar='LR',
+                            help='learning rate (default: auto)')
+        parser.add_argument('--lr-scheduler', type=str, default='poly',
+                            help='learning rate scheduler (default: poly)')
+        parser.add_argument('--lr-step', type=int, default=None,
+                            help='lr step to change lr')
+        parser.add_argument('--momentum', type=float, default=0.9,
+                            metavar='M', help='momentum (default: 0.9)')
+        parser.add_argument('--weight-decay', type=float, default=1e-4,
+                            metavar='M', help='w-decay (default: 1e-4)')
         # cuda, seed and logging
-        parser.add_argument( '--no-cuda', action='store_true', default=False, help='disables CUDA training' )
+        parser.add_argument('--no-cuda', action='store_true', default=False, help='disables CUDA training')
         # apex  a Pytorch extension with NVIDIA-maintained utilities to streamline mixed precision and distributed training
-        parser.add_argument( '--apex', type=int, default=2, choices=[0, 1, 2, 3], help='Automatic Mixed Precision' )
+        parser.add_argument('--apex', type=int, default=2, choices=[0, 1, 2, 3], help='Automatic Mixed Precision')
 
         # # finetuning pre-trained model
         # parser.add_argument('--ft', action='store_true', default= False,
@@ -67,12 +67,12 @@ class Options():
         #                     (default: None)')
 
         # evaluation option
-        parser.add_argument( '--ema', action='store_true', default=False,
-                             help='using EMA evaluation' )
-        parser.add_argument( '--eval', action='store_true', default=False,
-                             help='evaluating mIoU' )
-        parser.add_argument( '--no-val', action='store_true', default=False,
-                             help='skip validation during training' )
+        parser.add_argument('--ema', action='store_true', default=False,
+                            help='using EMA evaluation')
+        parser.add_argument('--eval', action='store_true', default=False,
+                            help='evaluating mIoU')
+        parser.add_argument('--no-val', action='store_true', default=False,
+                            help='skip validation during training')
         # # test option
         # parser.add_argument('--test-folder', type=str, default=None,
         #                     help='path to test image folder')
@@ -85,6 +85,10 @@ class Options():
         #                     help="multi grid dilation list")
         # parser.add_argument('--scale', action='store_false', default=True,
         #                    help='choose to use random scale transform(0.75-2),default:multi scale')
+
+        # check_point
+        parser.add_argument('--check-point-id', type=int, default=None)
+
         # the parser
         self.parser = parser
 
@@ -113,7 +117,8 @@ class Options():
                 'pcontext': 0.001,
                 'ade20k': 0.01,
                 'cityscapes': 0.01,
-                'rssrai': 0.03,
+                'rssrai': 0.01,
             }
             args.lr = lrs[args.dataset.lower()] / 8 * args.batch_size
+        args.check_point_id = 1
         return args
