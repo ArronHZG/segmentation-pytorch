@@ -9,7 +9,7 @@ class Saver():
 
     def __init__(self, args):
         self.args = args
-        self.directory = os.path.join( '..', '..', 'run', args.dataset, args.model + "-" + args.backbone )
+        self.directory = os.path.join('run', args.dataset, args.model + "-" + args.backbone )
         self.runs = glob.glob( os.path.join( self.directory, 'experiment_*' ) )
         run_ids = sorted( [int( experiment.split( '_' )[-1] ) for experiment in self.runs] ) if self.runs else [0]
         run_id = run_ids[-1] + 1

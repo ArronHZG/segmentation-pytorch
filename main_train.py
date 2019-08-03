@@ -114,9 +114,6 @@ class Trainer():
             loss = self.criterion( output, target )
             test_loss += loss.item()
             tbar.set_description( 'Test loss: %.3f' % (test_loss / (i + 1)) )
-            # pred = output.data.cpu().numpy()
-            # target = target.cpu().numpy()
-            # Add batch sample into evaluator
             self.miou.update( output, target )
             self.kappa.update( output, target )
             self.pixacc.update( output, target )
