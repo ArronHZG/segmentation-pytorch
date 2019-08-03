@@ -53,7 +53,6 @@ class Trainer():
             self.model.load_state_dict(model_state_dict)
             self.optimizer.load_state_dict(optimizer_state_dict)
 
-
         self.criterion = loss.CrossEntropyLossWithOHEM(0.7)
 
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min',
@@ -104,7 +103,7 @@ class Trainer():
             tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
             self.summary.writer.add_scalar('train/total_loss_iter', loss.item(), i + num_img_tr * epoch)
 
-        self.summary.writer.add_scalar('train/total_loss_epoch', train_loss, epoch)
+        self.summary.writer.add_scalar('train/loss_epoch', train_loss / len(tbar), epoch)
         self.summary.writer.add_scalar("train/learning_rate", self.optimizer.param_groups[0]['lr'], epoch)
         print('[Epoch: %d, numImages: %5d]' % (epoch, i * self.args.batch_size + image.data.shape[0]))
         print('Loss: %.3f' % train_loss)
@@ -135,7 +134,7 @@ class Trainer():
         metric = self.Metric(miou=self.miou.get(), pixacc=self.pixacc.get(), kappa=self.kappa.get())
 
         # Fast test during the training
-        self.summary.writer.add_scalar('val/total_loss_epoch', test_loss, epoch)
+        self.summary.writer.add_scalar('val/loss_epoch', test_loss / len(tbar), epoch)
         self.summary.writer.add_scalar('val/mIoU', metric.miou, epoch)
         self.summary.writer.add_scalar('val/Acc', metric.pixacc, epoch)
         self.summary.writer.add_scalar('val/kappa', metric.kappa, epoch)
@@ -165,8 +164,8 @@ if __name__ == "__main__":
     args = Options().parse()
     print(args)
     trainer = Trainer()
-    print('Total Epoches:', trainer.start_epoch)
-    print('Starting Epoch:', trainer.epochs)
+    print('Total Epoches:', trainer.epochs)
+    print('Starting Epoch:', trainer.start_epoch)
     for epoch in range(trainer.start_epoch, trainer.epochs):
         trainer.training(epoch)
         if not args.no_val:
