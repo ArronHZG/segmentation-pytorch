@@ -8,8 +8,8 @@ class Options():
         parser = argparse.ArgumentParser(description='PyTorch \
             Segmentation')
         # model and dataset
-        parser.add_argument('--model', type=str, default='deepLabV3+',
-                            help='model name (default: deepLabV3+)')
+        parser.add_argument('--model', type=str, default='DeepLabV3Plus',
+                            help='model name (default: DeepLabV3Plus)')
         parser.add_argument('--backbone', type=str, default='resnet50',
                             help='backbone name (default: resnet50)')
         parser.add_argument('--dataset', type=str, default='rssrai',
@@ -120,5 +120,4 @@ class Options():
                 'rssrai': 0.01,
             }
             args.lr = lrs[args.dataset.lower()] / 8 * args.batch_size
-        args.check_point_id = 1
         return args
