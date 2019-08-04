@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
     args.check_point_id = 1
     args.model = 'PSPNet'
-    args.batch_size = 48
+    args.batch_size = 64
 
     print(args)
     trainer = Trainer()
