@@ -7,7 +7,6 @@ from tqdm import tqdm
 from torch_model import get_model
 from torch_model.blseg.loss import loss
 from torch_model.blseg.metric import metric
-from torch_model.blseg.model import DeepLabV3Plus, PSPNet
 from train_model.config.option import Options
 from train_model.dataloader.utils import make_data_loader
 from train_model.utils.saver import Saver
@@ -44,7 +43,7 @@ class Trainer():
 
         self.best_pred = 0
 
-        self.model = get_model(model_name=self.args.model,backbone=self.args.backbone, num_classes=self.class_num)
+        self.model = get_model(model_name=self.args.model, backbone=self.args.backbone, num_classes=self.class_num)
 
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.args.lr, momentum=args.momentum,
                                          weight_decay=args.weight_decay)
@@ -167,7 +166,7 @@ if __name__ == "__main__":
     args.check_point_id = 1
     args.model = 'PSPNet'
     args.batch_size = 64
-
+    args.crop_size = 256
     print(args)
     trainer = Trainer()
     print('Total Epoches:', trainer.epochs)

@@ -21,7 +21,7 @@ class Saver():
             run_id = self.args.check_point_id
             self.experiment_dir = os.path.join(self.directory, 'experiment_{}'.format(str(run_id)))
             if not os.path.exists(self.experiment_dir):
-                raise FileNotFoundError
+                raise FileNotFoundError(self.experiment_dir)
         print(f"run_id  {run_id}")
 
     def save_checkpoint(self, state, is_best, metric, filename='checkpoint.pth'):
