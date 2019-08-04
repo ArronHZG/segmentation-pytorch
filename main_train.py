@@ -7,7 +7,6 @@ from tqdm import tqdm
 from torch_model import get_model
 from torch_model.blseg.loss import loss
 from torch_model.blseg.metric import metric
-from torch_model.blseg.model import DeepLabV3Plus, PSPNet
 from train_model.config.option import Options
 from train_model.dataloader.utils import make_data_loader
 from train_model.utils.saver import Saver
@@ -166,8 +165,8 @@ if __name__ == "__main__":
 
     args.check_point_id = 1
     args.model = 'DeepLabV3Plus'
-    args.batch_size = 48
-    args.crop_size = 512
+    args.batch_size = 64
+    args.crop_size = 256
     print(args)
     trainer = Trainer()
     print('Total Epoches:', trainer.epochs)
