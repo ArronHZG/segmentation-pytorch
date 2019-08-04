@@ -48,6 +48,8 @@ class TensorboardSummary():
                 os.makedirs( path )
             plt.savefig( f"{path}/{i}.jpg" )
 
+            plt.close('all')
+
         # self.grid_image = make_grid( image[:3,1:].clone().cpu().data, 3, normalize=True )
         # self.writer.add_image( 'Image', grid_image, global_step )
         # self.grid_image = make_grid( decode_seg_map_sequence( torch.max( output[:3], 1 )[1].detach().cpu().numpy()), 3, normalize=False, range=(0, 255) )

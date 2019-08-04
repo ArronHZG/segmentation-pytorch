@@ -44,7 +44,7 @@ class Trainer():
 
         self.best_pred = 0
 
-        self.model = get_model(model_name=self.args.model,backbone=self.args.backbone, num_classes=self.class_num)
+        self.model = get_model(model_name=self.args.model, backbone=self.args.backbone, num_classes=self.class_num)
 
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.args.lr, momentum=args.momentum,
                                          weight_decay=args.weight_decay)
@@ -165,9 +165,9 @@ if __name__ == "__main__":
     args = Options().parse()
 
     args.check_point_id = 1
-    args.model = 'PSPNet'
+    args.model = 'DeepLabV3Plus'
     args.batch_size = 48
-
+    args.crop_size = 512
     print(args)
     trainer = Trainer()
     print('Total Epoches:', trainer.epochs)
