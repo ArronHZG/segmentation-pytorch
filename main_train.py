@@ -61,18 +61,25 @@ class Trainer():
                                                                     verbose=True)
         if self.args.cuda:
             self.model = self.model.cuda()
+            self.criterion.cuda()
 
         self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level=f"O{args.apex}")
 
-        self.pixacc = metric.PixelAccuracy()
-
-        self.miou = metric.MeanIoU(self.class_num)
-
-        self.kappa = metric.Kappa(self.class_num)
-
         self.Metric = namedtuple('Metric', 'pixacc miou kappa')
 
+        self.train_metric = self.Metric(miou=metric.MeanIoU(self.class_num),
+                                        pixacc=metric.Kappa(self.class_num),
+                                        kappa=metric.Kappa(self.class_num))
+
+        self.valid_metric = self.Metric(miou=metric.MeanIoU(self.class_num),
+                                        pixacc=metric.Kappa(self.class_num),
+                                        kappa=metric.Kappa(self.class_num))
+
     def training(self, epoch):
+
+        self.train_metric.miou.reset()
+        self.train_metric.kappa.reset()
+        self.train_metric.pixacc.reset()
         train_loss = 0.0
         self.model.train()
         tbar = tqdm(self.train_loader)
@@ -89,6 +96,10 @@ class Trainer():
 
             loss = self.criterion(output, target)
 
+            self.valid_metric.miou.update(output, target)
+            self.valid_metric.kappa.update(output, target)
+            self.valid_metric.pixacc.update(output, target)
+
             if self.args.apex:
                 with amp.scale_loss(loss, self.optimizer) as scaled_loss:
                     scaled_loss.backward()
@@ -101,21 +112,26 @@ class Trainer():
             self.optimizer.step()
             train_loss += loss.item()
             tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
-            self.summary.writer.add_scalar('train/total_loss_iter', loss.item(), i + num_img_tr * epoch)
+            self.summary.writer.add_scalar('total_loss_iter', train_loss / (i + 1), i + num_img_tr * epoch)
 
-        self.summary.writer.add_scalar('train/loss_epoch', train_loss / len(tbar), epoch)
-        self.summary.writer.add_scalar("train/learning_rate", self.optimizer.param_groups[0]['lr'], epoch)
+        self.summary.writer.add_scalar("learning_rate", self.optimizer.param_groups[0]['lr'], epoch)
+        self.summary.writer.add_scalars('metric/loss_epoch', {"train": train_loss / num_img_tr}, epoch)
+        self.summary.writer.add_scalars('metric/mIoU', {"train": self.train_metric.miou.get()}, epoch)
+        self.summary.writer.add_scalars('metric/Acc', {"train": self.train_metric.pixacc.get()}, epoch)
+        self.summary.writer.add_scalars('metric/kappa', {"train": self.train_metric.kappa.get()}, epoch)
+
         print('[Epoch: %d, numImages: %5d]' % (epoch, i * self.args.batch_size + image.data.shape[0]))
         print('Loss: %.3f' % train_loss)
 
     def validation(self, epoch):
         self.model.eval()
 
-        self.miou.reset()
-        self.kappa.reset()
-        self.pixacc.reset()
+        self.valid_metric.miou.reset()
+        self.valid_metric.kappa.reset()
+        self.valid_metric.pixacc.reset()
 
         tbar = tqdm(self.val_loader)
+        num_img_tr = len(tbar)
         test_loss = 0.0
         for i, sample in enumerate(tbar):
             image, target = sample['image'], sample['label']
@@ -126,24 +142,25 @@ class Trainer():
             loss = self.criterion(output, target)
             test_loss += loss.item()
             tbar.set_description('Test loss: %.3f' % (test_loss / (i + 1)))
-            self.miou.update(output, target)
-            self.kappa.update(output, target)
-            self.pixacc.update(output, target)
+            self.valid_metric.miou.update(output, target)
+            self.valid_metric.kappa.update(output, target)
+            self.valid_metric.pixacc.update(output, target)
             self.summary.visualize_image(image, target, output, epoch)
 
-        metric = self.Metric(miou=self.miou.get(), pixacc=self.pixacc.get(), kappa=self.kappa.get())
-
         # Fast test during the training
-        self.summary.writer.add_scalar('val/loss_epoch', test_loss / len(tbar), epoch)
-        self.summary.writer.add_scalar('val/mIoU', metric.miou, epoch)
-        self.summary.writer.add_scalar('val/Acc', metric.pixacc, epoch)
-        self.summary.writer.add_scalar('val/kappa', metric.kappa, epoch)
+
+        new_pred = self.valid_metric.miou.get()
+
+        self.summary.writer.add_scalars('metric/loss_epoch', {"valid": test_loss /num_img_tr}, epoch)
+        self.summary.writer.add_scalars('metric/mIoU', {"valid": new_pred}, epoch)
+        self.summary.writer.add_scalars('metric/Acc', {"valid": self.valid_metric.pixacc.get()}, epoch)
+        self.summary.writer.add_scalars('metric/kappa', {"valid": self.valid_metric.kappa.get()}, epoch)
         print('Validation:')
         print('[Epoch: %d, numImages: %5d]' % (epoch, i * self.args.batch_size + image.data.shape[0]))
-        print(f"Acc:{metric.pixacc}, mIoU:{metric.miou}, kappa: {metric.kappa}")
+        print(
+            f"Acc:{self.valid_metric.pixacc.get()}, mIoU:{new_pred}, kappa: {self.valid_metric.kappa.get()}")
         print('Loss: %.3f' % test_loss)
 
-        new_pred = metric.miou
         is_best = False
 
         if new_pred > self.best_pred:
@@ -163,9 +180,9 @@ class Trainer():
 if __name__ == "__main__":
     args = Options().parse()
 
-    args.check_point_id = 1
-    args.model = 'DeepLabV3Plus'
-    args.batch_size = 64
+    # args.check_point_id = 1
+    args.model = 'PSPNet'
+    args.batch_size = 45
     args.crop_size = 256
     print(args)
     trainer = Trainer()
