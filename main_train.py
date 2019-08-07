@@ -51,8 +51,8 @@ class Trainer():
             self.model.load_state_dict( model_state_dict )
             self.optimizer.load_state_dict( optimizer_state_dict )
 
-        self.criterion = loss.CrossEntropyLossWithOHEM( 0.7 )
-        # self.criterion = torch.nn.CrossEntropyLoss()
+        # self.criterion = loss.CrossEntropyLossWithOHEM( 0.7 )
+        self.criterion = torch.nn.CrossEntropyLoss(ignore_index=255)
 
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau( self.optimizer, 'min',
                                                                      factor=0.9,
@@ -93,7 +93,6 @@ class Trainer():
 
             output = self.model( image )
 
-            # loss = self.criterion( output, target )
             loss = self.criterion( output, target )
 
             self.valid_metric.miou.update( output, target )
@@ -151,7 +150,7 @@ class Trainer():
         # Fast test during the training
 
         new_pred = self.valid_metric.miou.get()
-        train_loss /= num_img_tr
+        test_loss /= num_img_tr
         self.summary.writer.add_scalars( 'metric/loss_epoch', {"valid": test_loss}, epoch )
         self.summary.writer.add_scalars( 'metric/mIoU', {"valid": new_pred}, epoch )
         self.summary.writer.add_scalars( 'metric/Acc', {"valid": self.valid_metric.pixacc.get()}, epoch )
@@ -180,15 +179,15 @@ class Trainer():
 
 if __name__ == "__main__":
 
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
 
     args = Options().parse()
 
     args.dataset = 'voc2012'
-    args.model = 'PSPNet'
+    args.model = 'DeepLabV3Plus'
     args.backbone = 'selu_se_resnet50'
-    args.batch_size = 10
+    args.batch_size = 16
     args.base_size = 500
     args.crop_size = 480
     args.optim = "Adam"

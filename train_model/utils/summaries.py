@@ -24,6 +24,8 @@ class TensorboardSummary():
 
         # output (B,C,H,W) to (B,H,W)
         output = torch.argmax( output, dim=1 ).cpu().numpy()
+        print(output)
+        print(output.shape)
 
         for i in range( min( 10, image.shape[0] ) ):
             img_tmp = np.transpose( image[i], axes=[1, 2, 0] )
