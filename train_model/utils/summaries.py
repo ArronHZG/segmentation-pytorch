@@ -12,13 +12,12 @@ class TensorboardSummary():
     def __init__(self, directory, dataset):
         self.directory = directory
         self.writer = SummaryWriter( logdir=os.path.join( self.directory ) )
-        self.dataset = Rssrai()
+        self.dataset = dataset
         plt.axis( 'off' )
 
     def visualize_image(self, image, target, output, global_step):
-        # image (B,C,H,W) to (B,H,W,C)
+        # image (B,C,H,W)
         image = image.cpu().numpy()
-        image = image[:, 1:, :, :]
 
         # target (B,H,W)
         target = target.cpu().numpy()
@@ -28,8 +27,8 @@ class TensorboardSummary():
 
         for i in range( min( 10, image.shape[0] ) ):
             img_tmp = np.transpose( image[i], axes=[1, 2, 0] )
-            img_tmp *= self.dataset.std[1:]
-            img_tmp += self.dataset.mean[1:]
+            img_tmp *= self.dataset.std
+            img_tmp += self.dataset.mean
             img_tmp *= 255.0
             img_tmp = img_tmp.astype( np.uint8 )
             target_rgb_tmp = self.dataset.decode_segmap( target[i] )

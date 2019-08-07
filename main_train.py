@@ -18,38 +18,33 @@ class Trainer():
     def __init__(self):
         self.args = args
 
-        # Define Saver
-        self.saver = Saver( args )
-        self.saver.save_experiment_config()
-
-        # Define Tensorboard Summary
-        self.summary = TensorboardSummary( self.saver.experiment_dir, self.args.dataset )
-
-        # Define Dataloader
-        self.train_loader, self.val_loader, self.test_loader, self.class_num = make_data_loader(
-            dataset=self.args.dataset,
-            base_size=(self.args.base_size, self.args.base_size),
-            crop_size=(self.args.crop_size, self.args.crop_size),
-            batch_size=self.args.batch_size,
-            num_workers=self.args.workers
-        )
-
-        # Define network
-        # self.model = get_model(model_name=self.args.model,
-        #                        num_classes=self.class_num,
-        #                        backbone=self.args.backbone,
-        #                        pretrained=self.args.pretrained,
-        #                        pretrained_weight_path=self.args.pretrained_weight_path)
-
         self.start_epoch = self.args.start_epoch
 
         self.epochs = self.args.epochs
 
         self.best_pred = 0
 
+        # Define Dataloader
+        self.train_loader, self.val_loader, self.test_loader, self.class_num, self.val_dataset = make_data_loader(
+            dataset_name=self.args.dataset,
+            base_size=(self.args.base_size, self.args.base_size),
+            crop_size=(self.args.crop_size, self.args.crop_size),
+            batch_size=self.args.batch_size,
+            num_workers=self.args.workers
+        )
+
+        # Define Saver
+        self.saver = Saver( args )
+        self.saver.save_experiment_config()
+
+        # Define Tensorboard Summary
+        self.summary = TensorboardSummary( self.saver.experiment_dir, self.val_dataset )
+
+        # Define network
         self.model = get_model( model_name=self.args.model, backbone=self.args.backbone, num_classes=self.class_num )
 
-        self.optimizer = get_optimizer(optim_name=self.args.optim,parameters=self.model.parameters(),lr=self.args.lr)
+        self.optimizer = get_optimizer( optim_name=self.args.optim, parameters=self.model.parameters(),
+                                        lr=self.args.lr )
 
         if self.args.check_point_id != None:
             self.best_pred, self.start_epoch, model_state_dict, optimizer_state_dict = self.saver.load_checkpoint()
@@ -187,11 +182,11 @@ if __name__ == "__main__":
 
     args.dataset = 'voc2012'
     args.model = 'PSPNet'
-    args.backbone='selu_se_resnet50'
+    args.backbone = 'selu_se_resnet50'
     args.batch_size = 8
     args.base_size = 513
     args.crop_size = 512
-    args.optim="Adam"
+    args.optim = "Adam"
     print( args )
     trainer = Trainer()
     print( 'Total Epoches:', trainer.epochs )

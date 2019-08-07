@@ -91,7 +91,7 @@ class Kappa:
         tmp = 0.0
         for i in range(len(self.tar_vec)):
             tmp += self.pre_vec[i] * self.tar_vec[i]
-        pe = tmp / sum(self.tar_vec) ** 2
+        pe = tmp / (sum(self.tar_vec) ** 2 + 1e-8)
         p0 = sum(self.cor_vec) / (sum(self.tar_vec) + 1e-8)
         cohens_coefficient = (p0 - pe) / (1 - pe)
         return cohens_coefficient
