@@ -178,14 +178,18 @@ class Trainer():
 
 
 if __name__ == "__main__":
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
     args = Options().parse()
 
     args.dataset = 'voc2012'
     args.model = 'PSPNet'
     args.backbone = 'selu_se_resnet50'
-    args.batch_size = 8
-    args.base_size = 513
-    args.crop_size = 512
+    args.batch_size = 10
+    args.base_size = 500
+    args.crop_size = 480
     args.optim = "Adam"
     print( args )
     trainer = Trainer()
