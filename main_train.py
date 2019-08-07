@@ -114,8 +114,9 @@ class Trainer():
             tbar.set_description( 'Train loss: %.3f' % (train_loss / (i + 1)) )
             self.summary.writer.add_scalar( 'total_loss_iter', train_loss / (i + 1), i + num_img_tr * epoch )
 
+        train_loss /= num_img_tr
         self.summary.writer.add_scalar( "learning_rate", self.optimizer.param_groups[0]['lr'], epoch )
-        self.summary.writer.add_scalars( 'metric/loss_epoch', {"train": train_loss / num_img_tr}, epoch )
+        self.summary.writer.add_scalars( 'metric/loss_epoch', {"train": train_loss}, epoch )
         self.summary.writer.add_scalars( 'metric/mIoU', {"train": self.train_metric.miou.get()}, epoch )
         self.summary.writer.add_scalars( 'metric/Acc', {"train": self.train_metric.pixacc.get()}, epoch )
         self.summary.writer.add_scalars( 'metric/kappa', {"train": self.train_metric.kappa.get()}, epoch )
@@ -150,8 +151,8 @@ class Trainer():
         # Fast test during the training
 
         new_pred = self.valid_metric.miou.get()
-
-        self.summary.writer.add_scalars( 'metric/loss_epoch', {"valid": test_loss / num_img_tr}, epoch )
+        train_loss /= num_img_tr
+        self.summary.writer.add_scalars( 'metric/loss_epoch', {"valid": test_loss}, epoch )
         self.summary.writer.add_scalars( 'metric/mIoU', {"valid": new_pred}, epoch )
         self.summary.writer.add_scalars( 'metric/Acc', {"valid": self.valid_metric.pixacc.get()}, epoch )
         self.summary.writer.add_scalars( 'metric/kappa', {"valid": self.valid_metric.kappa.get()}, epoch )
