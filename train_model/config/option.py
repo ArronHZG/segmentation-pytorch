@@ -1,5 +1,5 @@
-import os
 import argparse
+
 import torch
 
 
@@ -14,7 +14,7 @@ class Options():
                             help='backbone name (default: resnet50)')
         parser.add_argument('--dataset', type=str, default='rssrai',
                             help='dataset name (default: rssrai)')
-        parser.add_argument('--workers', type=int, default=6,
+        parser.add_argument('--workers', type=int, default=12,
                             metavar='N', help='dataloader threads')
         parser.add_argument('--base-size', type=int, default=512,
                             help='base image size')
@@ -50,7 +50,7 @@ class Options():
                             help='lr step to change lr')
         parser.add_argument('--momentum', type=float, default=0.9,
                             metavar='M', help='momentum (default: 0.9)')
-        parser.add_argument('--weight-decay', type=float, default=1e-4,
+        parser.add_argument('--weight-decay', type=float, default=5e-4,
                             metavar='M', help='w-decay (default: 1e-4)')
         # cuda, seed and logging
         parser.add_argument('--no-cuda', action='store_true', default=False, help='disables CUDA training')
@@ -112,12 +112,12 @@ class Options():
             args.test_batch_size = args.batch_size
         if args.lr is None:
             lrs = {
-                'pascal_voc': 0.0001,
-                'pascal_aug': 0.001,
-                'pcontext': 0.001,
-                'ade20k': 0.01,
-                'cityscapes': 0.01,
-                'rssrai': 0.01,
+                'pascal_voc': 0.1,
+                'pascal_aug': 0.1,
+                'pcontext': 0.1,
+                'ade20k': 0.1,
+                'cityscapes': 0.1,
+                'rssrai': 0.1,
             }
-            args.lr = lrs[args.dataset.lower()] / 8 * args.batch_size
+            args.lr = lrs[args.dataset.lower()] / 256 * args.batch_size
         return args
