@@ -1,20 +1,35 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import torch
 from torch.utils.data import DataLoader
 
 from train_model.dataloader.rssrai_tools import rssrai
+from train_model.dataloader.voc2012 import pascal
 
 
-def make_data_loader(args, **kwargs):
-    if args.dataset == 'rssrai':
-        train_set = rssrai.Rssrai(type='train',crop_size=args.crop_size)
-        val_set = rssrai.Rssrai(type='valid')
+def make_data_loader(dataset, base_size, crop_size, batch_size, num_workers):
+    if dataset == 'rssrai':
+        train_set = rssrai.Rssrai( type='train', crop_size=crop_size )
+        val_set = rssrai.Rssrai( type='valid', crop_size=crop_size )
         num_class = train_set.NUM_CLASSES
-        train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True,
-                                  **kwargs)
-        val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False, **kwargs)
+
+        train_loader = DataLoader( train_set, batch_size=batch_size, shuffle=True, pin_memory=True,
+                                   num_workers=num_workers )
+        val_loader = DataLoader( val_set, batch_size=batch_size, shuffle=False, pin_memory=True,
+                                 num_workers=num_workers )
         test_loader = None
+
+        return train_loader, val_loader, test_loader, num_class
+
+    if dataset == 'voc2012':
+
+        train_set = pascal.VOCSegmentation( type='train', base_size=base_size, crop_size=crop_size )
+        val_set = pascal.VOCSegmentation( type='val', base_size=base_size, crop_size=crop_size )
+        num_class = train_set.NUM_CLASSES
+
+        train_loader = DataLoader( train_set, batch_size=batch_size, shuffle=True, pin_memory=True,
+                                   num_workers=num_workers )
+        val_loader = DataLoader( val_set, batch_size=batch_size, shuffle=False, pin_memory=True,
+                                 num_workers=num_workers )
+        test_loader = None
+
         return train_loader, val_loader, test_loader, num_class
 
     else:

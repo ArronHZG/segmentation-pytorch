@@ -16,7 +16,7 @@ class Options():
                             help='dataset name (default: rssrai)')
         parser.add_argument('--workers', type=int, default=12,
                             metavar='N', help='dataloader threads')
-        parser.add_argument('--base-size', type=int, default=512,
+        parser.add_argument('--base-size', type=int, default=513,
                             help='base image size')
         parser.add_argument('--crop-size', type=int, default=512,
                             help='crop image size')
@@ -40,8 +40,8 @@ class Options():
                             metavar='N', help='input batch size for \
                             testing (default: same as batch size)')
         # optimizer params
-        parser.add_argument('--loss', type=str, default="SGD",
-                            help='learning rate (default: auto)')
+        parser.add_argument('--optim', type=str, default="SGD",
+                            help='(default: auto)')
         parser.add_argument('--lr', type=float, default=None, metavar='LR',
                             help='learning rate (default: auto)')
         parser.add_argument('--lr-scheduler', type=str, default='poly',

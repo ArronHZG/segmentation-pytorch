@@ -32,7 +32,7 @@ class BCEWithLogitsLossWithOHEM(nn.Module):
 
 class CrossEntropyLossWithOHEM(nn.Module):
 
-    def __init__(self, ohem_ratio=1.0, weight=None, ignore_index=-100,
+    def __init__(self, ohem_ratio=1.0, weight=None, ignore_index=255,
                  eps=1e-7):
         super(CrossEntropyLossWithOHEM, self).__init__()
         self.criterion = nn.CrossEntropyLoss(weight=weight,

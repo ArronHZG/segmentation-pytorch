@@ -24,7 +24,7 @@ class BasicBlock(nn.Module):
         self.bn1 = nn.BatchNorm2d(mid_ch)
         self.conv2 = conv3x3(mid_ch, out_ch, stride=1)
         self.bn2 = nn.BatchNorm2d(out_ch)
-        self.relu = nn.ReLU(inplace=True)
+        self.SELU = nn.SELU(inplace=True)
 
         if self.do_downsample:
             self.residual = nn.Sequential(
@@ -36,7 +36,7 @@ class BasicBlock(nn.Module):
             self.se = nn.Sequential(
                 nn.AdaptiveAvgPool2d((1, 1)),
                 nn.Conv2d(out_ch, out_ch // 16, 1, bias=False),
-                nn.ReLU(inplace=True),
+                nn.SELU(inplace=True),
                 nn.Conv2d(out_ch // 16, out_ch, 1, bias=False),
                 nn.Sigmoid(),
             )
@@ -45,7 +45,7 @@ class BasicBlock(nn.Module):
         residual = x
         x = self.conv1(x)
         x = self.bn1(x)
-        x = self.relu(x)
+        x = self.SELU(x)
         x = self.conv2(x)
         x = self.bn2(x)
 
@@ -56,7 +56,7 @@ class BasicBlock(nn.Module):
         if self.do_downsample:
             residual = self.residual(residual)
         x += residual
-        return self.relu(x)
+        return self.SELU(x)
 
 
 class ResidualBlock(nn.Module):
@@ -73,7 +73,7 @@ class ResidualBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(mid_ch)
         self.conv3 = nn.Conv2d(mid_ch, out_ch, 1, bias=False)
         self.bn3 = nn.BatchNorm2d(out_ch)
-        self.relu = nn.ReLU(inplace=True)
+        self.SELU = nn.SELU(inplace=True)
 
         if self.do_downsample:
             self.residual = nn.Sequential(
@@ -86,7 +86,7 @@ class ResidualBlock(nn.Module):
             self.se = nn.Sequential(
                 nn.AdaptiveAvgPool2d((1, 1)),
                 nn.Conv2d(out_ch, out_ch // 16, 1, bias=False),
-                nn.ReLU(inplace=True),
+                nn.SELU(inplace=True),
                 nn.Conv2d(out_ch // 16, out_ch, 1, bias=False),
                 nn.Sigmoid(),
             )
@@ -95,10 +95,10 @@ class ResidualBlock(nn.Module):
         residual = x
         x = self.conv1(x)
         x = self.bn1(x)
-        x = self.relu(x)
+        x = self.SELU(x)
         x = self.conv2(x)
         x = self.bn2(x)
-        x = self.relu(x)
+        x = self.SELU(x)
         x = self.conv3(x)
         x = self.bn3(x)
 
@@ -109,19 +109,19 @@ class ResidualBlock(nn.Module):
         if self.do_downsample:
             residual = self.residual(residual)
         x += residual
-        return self.relu(x)
+        return self.SELU(x)
 
 
 class ResNet34(BackboneBaseModule):
 
-    def __init__(self, use_se: object = False) -> object:
+    def __init__(self, use_se=False):
         super(ResNet34, self).__init__()
         self.channels = [64, 64, 128, 256, 512]
         self.strides = [2, 4, 8, 16, 32]
         self.stage0 = nn.Sequential(
             nn.Conv2d(3, self.channels[0], 7, stride=2, padding=3, bias=False),
             nn.BatchNorm2d(self.channels[0]),
-            nn.ReLU(inplace=True),
+            nn.SELU(inplace=True),
         )
         self.stage1 = nn.Sequential(nn.MaxPool2d(3, stride=2, padding=1))
         for layer in _add_stage(BasicBlock, self.channels[0], self.channels[1],
@@ -160,13 +160,13 @@ class ResNet50S(BackboneBaseModule):
         self.stage0 = nn.Sequential(
             conv3x3(3, 32, 2),
             nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
+            nn.SELU(inplace=True),
             conv3x3(32, 32),
             nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
+            nn.SELU(inplace=True),
             conv3x3(32, self.channels[0]),
             nn.BatchNorm2d(self.channels[0]),
-            nn.ReLU(inplace=True),
+            nn.SELU(inplace=True),
         )
         self.stage1 = nn.Sequential(nn.MaxPool2d(3, stride=2, padding=1))
         for layer in _add_stage(ResidualBlock, self.channels[0],

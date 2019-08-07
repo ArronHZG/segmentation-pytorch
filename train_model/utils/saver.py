@@ -50,7 +50,7 @@ class Saver():
         p['backbone'] = self.args.backbone
         p['lr'] = self.args.lr
         p['lr_scheduler'] = self.args.lr_scheduler
-        p['loss'] = self.args.loss
+        p['optim'] = self.args.optim
         p['epoch'] = self.args.epochs
         p['base_size'] = self.args.base_size
         p['crop_size'] = self.args.crop_size

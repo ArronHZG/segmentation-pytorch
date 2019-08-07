@@ -1,6 +1,8 @@
 import torch
 from torch import nn
-from ..backbone import *
+
+from torch_model.blseg.backbone import VGG16, MobileNetV1, ResNet34, MobileNetV2, ModifiedAlignedXception, ResNet50S
+from torch_model.blseg.backbone.selu_resnet import ResNet50S as SeLUResNet50S
 
 
 class SegBaseModule(nn.Module):
@@ -50,6 +52,8 @@ class SegBaseModule(nn.Module):
             return ResNet50S()
         elif backbone_name == 'se_resnet50':
             return ResNet50S(use_se=True)
+        elif backbone_name == 'selu_se_resnet50':
+            return SeLUResNet50S(use_se=True)
         elif backbone_name == 'mobilenet_v2':
             return MobileNetV2()
         elif backbone_name == 'xception':
