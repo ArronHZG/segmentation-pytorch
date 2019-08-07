@@ -70,14 +70,16 @@ color_list = np.array([[0, 200, 0],
 class Rssrai(data.Dataset):
     NUM_CLASSES = 16
 
-    def __init__(self, type='train', base_dir=Path.db_root_dir('rssrai'), crop_size=256):
+    def __init__(self, type='train', base_size=(512, 512), crop_size=(512, 512), base_dir=Path.db_root_dir('rssrai')):
 
         super().__init__()
         self._base_dir = base_dir
         self.type = type
+        self.in_c = 4
         self.mean = (0.52891074, 0.38070734, 0.40119018, 0.36884733)
         self.std = (0.24007008, 0.23784, 0.22267079, 0.21865861)
         self.crop_size = crop_size
+        self.base_size = base_size
         self.im_ids = []
         self.images = []
         self.categories = []
@@ -93,7 +95,7 @@ class Rssrai(data.Dataset):
             self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
             self._label_dir = os.path.join(self._base_dir, 'split_train', 'label')
 
-            self.len = 13500
+            self.len = 7000
 
         if self.type == 'valid':
             self._label_path_list = glob(os.path.join(self._base_dir, 'split_valid_256', 'label', '*.tif'))
@@ -112,6 +114,7 @@ class Rssrai(data.Dataset):
 
     def __len__(self):
         return self.len
+        # return 10
 
     def get_numpy_image(self, index):
         '''
@@ -126,19 +129,29 @@ class Rssrai(data.Dataset):
             return sample
         if self.type == 'valid':
             sample = self._read_file(self._label_name_list[index])
+            sample = self._label_enhance(sample)
             return sample
         if self.type == 'test':
-            pass
-        return 1, 2
+            return 1, 2
 
     def _random_crop_and_enhance(self, sample):
         compose = A.Compose([
-            A.RandomCrop(self.crop_size, self.crop_size, p=1),
+            A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
+            A.RandomCrop(self.crop_size[0], self.crop_size[1], p=1),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.RGBShift(),
             A.Blur(),
             A.GaussNoise(),
+            A.Normalize(mean=self.mean, std=self.std, p=1)
+        ], additional_targets={'image': 'image', 'label': 'mask'})
+        return compose(**sample)
+
+    def _label_enhance(self, sample):
+        compose = A.Compose([
+            A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
+            A.CenterCrop(self.crop_size[0], self.crop_size[1], p=1),
+            A.Normalize(mean=self.mean, std=self.std, p=1)
         ], additional_targets={'image': 'image', 'label': 'mask'})
         return compose(**sample)
 
@@ -158,9 +171,8 @@ class Rssrai(data.Dataset):
         return random.choice(self._label_name_list)
 
     def transform(self, sample):
-        sample['image'] = A.Normalize(mean=self.mean, std=self.std)(image=sample['image'])["image"]
         sample['image'] = torch.from_numpy(sample['image']).permute(2, 0, 1)
-        sample['label'] = torch.from_numpy(sample['label'])
+        sample['label'] = torch.from_numpy(sample['label']).long()
         return sample
 
     def __str__(self):

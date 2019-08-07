@@ -9,11 +9,12 @@ from .aspp import ASPP
 class DeepLabV3Plus(SegBaseModule):
 
     def __init__(self,
+                 in_c,
+                 num_classes,
                  backbone='resnet50',
-                 num_classes=21,
                  dilations=[1, 1, 1, 1, 2]):
         super(DeepLabV3Plus, self).__init__(num_classes)
-        self.backbone = self._get_backbone(backbone)
+        self.backbone = self._get_backbone(in_c=in_c, backbone_name=backbone)
         self.backbone.change_output_stride(16)
         self.backbone.change_dilation(dilations)
         self.aspp = ASPP(self.backbone.channels[4])

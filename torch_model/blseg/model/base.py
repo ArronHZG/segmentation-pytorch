@@ -39,7 +39,7 @@ class SegBaseModule(nn.Module):
         self.num_classes = num_classes
         raise NotImplementedError
 
-    def _get_backbone(self, backbone_name):
+    def _get_backbone(self, in_c, backbone_name):
         if backbone_name == 'vgg16':
             return VGG16()
         elif backbone_name == 'mobilenet_v1':
@@ -53,7 +53,7 @@ class SegBaseModule(nn.Module):
         elif backbone_name == 'se_resnet50':
             return ResNet50S(use_se=True)
         elif backbone_name == 'selu_se_resnet50':
-            return SeLUResNet50S(use_se=True)
+            return SeLUResNet50S(in_c=in_c, use_se=True)
         elif backbone_name == 'mobilenet_v2':
             return MobileNetV2()
         elif backbone_name == 'xception':

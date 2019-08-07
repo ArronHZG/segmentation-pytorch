@@ -1,53 +1,58 @@
 import os
-import torch
-import numpy as np
-from torchvision.utils import make_grid
-from tensorboardX import SummaryWriter
-import matplotlib.pyplot as plt
 
-from train_model.dataloader.rssrai_tools.rssrai import Rssrai
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from PIL import Image
+from tensorboardX import SummaryWriter
 
 
 class TensorboardSummary():
     def __init__(self, directory, dataset):
         self.directory = directory
-        self.writer = SummaryWriter( logdir=os.path.join( self.directory ) )
+        self.writer = SummaryWriter(logdir=os.path.join(self.directory))
         self.dataset = dataset
-        plt.axis( 'off' )
+        plt.axis('off')
 
-    def visualize_image(self, image, target, output, global_step):
-        # image (B,C,H,W)
-        image = image.cpu().numpy()
+    def visualize_image(self, image, target, output, epoch, batch_index):
+        # image (B,C,H,W) To (B,H,W,C)
+        image_np = image.cpu().numpy()
+        image_np = np.transpose(image_np, axes=[0,2,3,1])
+        image_np *= self.dataset.std
+        image_np += self.dataset.mean
+        image_np *= 255.0
+        image_np = image_np.astype(np.uint8)
 
         # target (B,H,W)
         target = target.cpu().numpy()
 
         # output (B,C,H,W) to (B,H,W)
-        output = torch.argmax( output, dim=1 ).cpu().numpy()
-        print(output)
-        print(output.shape)
+        output = torch.argmax(output, dim=1).cpu().numpy()
+        # print(output)
+        # print(output.shape)
 
-        for i in range( min( 10, image.shape[0] ) ):
-            img_tmp = np.transpose( image[i], axes=[1, 2, 0] )
-            img_tmp *= self.dataset.std
-            img_tmp += self.dataset.mean
-            img_tmp *= 255.0
-            img_tmp = img_tmp.astype( np.uint8 )
-            target_rgb_tmp = self.dataset.decode_segmap( target[i] )
-            output_rgb_tmp = self.dataset.decode_segmap( output[i] )
+        # blank (H,W,C)
+        blank = np.zeros((output.shape[1],output.shape[2],3))
+        blank.fill(255)
+
+        for i in range(min(3, image_np.shape[0])):
+            img_tmp=image_np[i]
+            img_rgb_tmp = np.array(Image.fromarray(img_tmp).convert("RGB"))
+            target_rgb_tmp = self.dataset.decode_segmap(target[i])
+            output_rgb_tmp = self.dataset.decode_segmap(output[i])
             plt.figure()
-            plt.title( 'display' )
-            plt.subplot( 131 )
-            plt.imshow( img_tmp )
-            plt.subplot( 132 )
-            plt.imshow( target_rgb_tmp )
-            plt.subplot( 133 )
-            plt.imshow( output_rgb_tmp )
+            plt.title('display')
+            plt.subplot(131)
+            plt.imshow(img_rgb_tmp)
+            plt.subplot(132)
+            plt.imshow(target_rgb_tmp)
+            plt.subplot(133)
+            plt.imshow(output_rgb_tmp)
 
-            path = f'{self.directory}/epoch_{global_step}'
-            if not os.path.exists( path ):
-                os.makedirs( path )
-            plt.savefig( f"{path}/{i}.jpg" )
+            path = f'{self.directory}/epoch_{epoch}'
+            if not os.path.exists(path):
+                os.makedirs(path)
+            plt.savefig(f"{path}/{batch_index}-{i}.jpg")
 
             plt.close('all')
 
@@ -56,4 +61,17 @@ class TensorboardSummary():
         # self.grid_image = make_grid( decode_seg_map_sequence( torch.max( output[:3], 1 )[1].detach().cpu().numpy()), 3, normalize=False, range=(0, 255) )
         # self.writer.add_image( 'Predicted label', grid_image, global_step )
         # self.grid_image = make_grid( decode_seg_map_sequence( torch.squeeze( target[:3], 1 ).detach().cpu().numpy()), 3, normalize=False, range=(0, 255) )
-        # self.writer.add_image( np.array(plt), global_step )
+        #     print(img_rgb_tmp.shape)
+        #     print(target_rgb_tmp.shape)
+        #     print(output_rgb_tmp.shape)
+        #     print(blank.shape)
+            cat_image = np.concatenate((img_rgb_tmp,
+                                              blank,
+                                              target_rgb_tmp,
+                                              blank,
+                                              output_rgb_tmp),axis=1)
+            # print(cat_image.shape)
+            self.writer.add_image('Image',
+                              cat_image,
+                                  dataformats = "HWC"
+                              )

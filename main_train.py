@@ -41,7 +41,10 @@ class Trainer():
         self.summary = TensorboardSummary( self.saver.experiment_dir, self.val_dataset )
 
         # Define network
-        self.model = get_model( model_name=self.args.model, backbone=self.args.backbone, num_classes=self.class_num )
+        self.model = get_model( model_name=self.args.model,
+                                backbone=self.args.backbone,
+                                num_classes=self.class_num,
+                                in_c=self.val_dataset.in_c)
 
         self.optimizer = get_optimizer( optim_name=self.args.optim, parameters=self.model.parameters(),
                                         lr=self.args.lr )
@@ -54,15 +57,15 @@ class Trainer():
         # self.criterion = loss.CrossEntropyLossWithOHEM( 0.7 )
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=255)
 
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau( self.optimizer, 'min',
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau( self.optimizer, 'max',
                                                                      factor=0.9,
                                                                      patience=3,
                                                                      verbose=True )
         if self.args.cuda:
             self.model = self.model.cuda()
             self.criterion.cuda()
-
-        self.model, self.optimizer = amp.initialize( self.model, self.optimizer, opt_level=f"O{args.apex}" )
+        if self.args.apex:
+            self.model, self.optimizer = amp.initialize( self.model, self.optimizer, opt_level=f"O{args.apex}" )
 
         self.Metric = namedtuple( 'Metric', 'pixacc miou kappa' )
 
@@ -95,9 +98,9 @@ class Trainer():
 
             loss = self.criterion( output, target )
 
-            self.valid_metric.miou.update( output, target )
-            self.valid_metric.kappa.update( output, target )
-            self.valid_metric.pixacc.update( output, target )
+            self.train_metric.miou.update( output, target )
+            self.train_metric.kappa.update( output, target )
+            self.train_metric.pixacc.update( output, target )
 
             if self.args.apex:
                 with amp.scale_loss( loss, self.optimizer ) as scaled_loss:
@@ -145,7 +148,7 @@ class Trainer():
             self.valid_metric.miou.update( output, target )
             self.valid_metric.kappa.update( output, target )
             self.valid_metric.pixacc.update( output, target )
-            self.summary.visualize_image( image, target, output, epoch )
+            self.summary.visualize_image( image, target, output, epoch ,i)
 
         # Fast test during the training
 
@@ -184,13 +187,16 @@ if __name__ == "__main__":
 
     args = Options().parse()
 
-    args.dataset = 'voc2012'
+
+    args.dataset = 'rssrai'
     args.model = 'DeepLabV3Plus'
     args.backbone = 'selu_se_resnet50'
-    args.batch_size = 16
-    args.base_size = 500
-    args.crop_size = 480
+    # args.check_point_id = 15
+    args.batch_size = 70
+    args.base_size = 256
+    args.crop_size = 256
     args.optim = "Adam"
+    args.apex = 2
     print( args )
     trainer = Trainer()
     print( 'Total Epoches:', trainer.epochs )

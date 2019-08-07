@@ -153,12 +153,12 @@ class ResNet34(BackboneBaseModule):
 
 class ResNet50S(BackboneBaseModule):
 
-    def __init__(self, use_se=False):
+    def __init__(self, in_c, use_se=False):
         super(ResNet50S, self).__init__()
         self.channels = [64, 256, 512, 1024, 2048]
         self.strides = [2, 4, 8, 16, 32]
         self.stage0 = nn.Sequential(
-            conv3x3(3, 32, 2),
+            conv3x3(in_c, 32, 2),
             nn.BatchNorm2d(32),
             nn.SELU(inplace=True),
             conv3x3(32, 32),

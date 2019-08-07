@@ -70,8 +70,8 @@ class VOCSegmentation( Dataset ):
         print( 'Number of images in {}: {:d}'.format( type, len( self.images ) ) )
 
     def __len__(self):
+        # return 5
         return len( self.images )
-        # return 3
 
     def __getitem__(self, index):
         _img, _target = self._make_img_gt_point_pair( index )
