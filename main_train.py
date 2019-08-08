@@ -154,14 +154,14 @@ class Trainer():
 
         new_pred = self.valid_metric.miou.get()
         test_loss /= num_img_tr
+        metric_str = f"Acc:{self.valid_metric.pixacc.get()}, mIoU:{new_pred}, kappa: {self.valid_metric.kappa.get()}"
         self.summary.writer.add_scalars( 'metric/loss_epoch', {"valid": test_loss}, epoch )
         self.summary.writer.add_scalars( 'metric/mIoU', {"valid": new_pred}, epoch )
         self.summary.writer.add_scalars( 'metric/Acc', {"valid": self.valid_metric.pixacc.get()}, epoch )
         self.summary.writer.add_scalars( 'metric/kappa', {"valid": self.valid_metric.kappa.get()}, epoch )
         print( 'Validation:' )
         print( '[Epoch: %d, numImages: %5d]' % (epoch, num_img_tr * self.args.batch_size) )
-        print(
-            f"Acc:{self.valid_metric.pixacc.get()}, mIoU:{new_pred}, kappa: {self.valid_metric.kappa.get()}" )
+        print(metric_str)
         print( 'Loss: %.3f' % test_loss )
 
         is_best = False
@@ -175,7 +175,7 @@ class Trainer():
             'state_dict': self.model.state_dict(),
             'optimizer': self.optimizer.state_dict(),
             'best_pred': self.best_pred,
-        }, is_best, metric )
+        }, is_best, metric_str )
 
         return new_pred
 
@@ -191,12 +191,16 @@ if __name__ == "__main__":
     args.dataset = 'rssrai'
     args.model = 'DeepLabV3Plus'
     args.backbone = 'selu_se_resnet50'
-    # args.check_point_id = 15
+    args.check_point_id = 17
     args.batch_size = 70
     args.base_size = 256
     args.crop_size = 256
     args.optim = "Adam"
     args.apex = 2
+    args.epochs=200
+    # args.lr=0.01
+
+
     print( args )
     trainer = Trainer()
     print( 'Total Epoches:', trainer.epochs )

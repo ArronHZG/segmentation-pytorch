@@ -31,9 +31,9 @@ class TensorboardSummary():
         # print(output)
         # print(output.shape)
 
-        # blank (H,W,C)
-        blank = np.zeros((output.shape[1],output.shape[2],3))
-        blank.fill(255)
+        # # blank (H,W,C)
+        # blank = np.zeros((output.shape[1],output.shape[2],3))
+        # blank.fill(255)
 
         for i in range(min(3, image_np.shape[0])):
             img_tmp=image_np[i]
@@ -65,13 +65,13 @@ class TensorboardSummary():
         #     print(target_rgb_tmp.shape)
         #     print(output_rgb_tmp.shape)
         #     print(blank.shape)
-            cat_image = np.concatenate((img_rgb_tmp,
-                                              blank,
-                                              target_rgb_tmp,
-                                              blank,
-                                              output_rgb_tmp),axis=1)
-            # print(cat_image.shape)
-            self.writer.add_image('Image',
-                              cat_image,
-                                  dataformats = "HWC"
-                              )
+        #     cat_image = np.concatenate((img_rgb_tmp,
+        #                                       blank,
+        #                                       target_rgb_tmp,
+        #                                       blank,
+        #                                       output_rgb_tmp),axis=1)
+        #     # print(cat_image.shape)
+        #     self.writer.add_image('Image',
+        #                       cat_image,
+        #                           dataformats = "HWC"
+        #                       )

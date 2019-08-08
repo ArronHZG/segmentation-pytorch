@@ -95,7 +95,7 @@ class Rssrai(data.Dataset):
             self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
             self._label_dir = os.path.join(self._base_dir, 'split_train', 'label')
 
-            self.len = 7000
+            self.len = 14000
 
         if self.type == 'valid':
             self._label_path_list = glob(os.path.join(self._base_dir, 'split_valid_256', 'label', '*.tif'))
@@ -137,7 +137,8 @@ class Rssrai(data.Dataset):
     def _random_crop_and_enhance(self, sample):
         compose = A.Compose([
             A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
-            A.RandomCrop(self.crop_size[0], self.crop_size[1], p=1),
+            A.RandomSizedCrop((512,512),self.crop_size[0], self.crop_size[1], p=1),
+            # A.RandomCrop(self.crop_size[0], self.crop_size[1], p=1),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.RGBShift(),
