@@ -197,7 +197,7 @@ if __name__ == "__main__":
     args.crop_size = 256
     args.optim = "Adam"
     args.apex = 2
-    args.epochs=200
+    args.epochs=300
     # args.lr=0.01
 
 

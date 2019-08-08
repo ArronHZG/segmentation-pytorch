@@ -5,13 +5,12 @@ from glob import glob
 from pprint import pprint
 
 import albumentations as A
+import matplotlib.pyplot  as plt
 import numpy as np
-import pandas as pd
 import torch
 import torch.utils.data as data
 from PIL import Image
 from torch.utils.data import DataLoader
-import matplotlib.pyplot  as plt
 
 from train_model.config.mypath import Path
 
@@ -72,6 +71,7 @@ class Rssrai(data.Dataset):
 
     def __init__(self, type='train', base_size=(512, 512), crop_size=(256, 256), base_dir=Path.db_root_dir('rssrai')):
 
+        assert type in ['train', 'valid', 'test']
         super().__init__()
         self._base_dir = base_dir
         self.type = type
@@ -107,7 +107,10 @@ class Rssrai(data.Dataset):
             self.len = len(self._label_name_list)
 
         if self.type == 'test':
-            pass
+            self._img_path_list = glob(os.path.join(self._base_dir, 'split_test_256', 'img', '*.tif'))
+            self._img_name_list = [name.split('/')[-1] for name in self._img_path_list]
+            self._image_dir = os.path.join(self._base_dir, 'split_test_256', 'img')
+            self.len = len(self._img_path_list)
 
     def __getitem__(self, index):
         return self.transform(self.get_numpy_image(index))
@@ -115,6 +118,9 @@ class Rssrai(data.Dataset):
     def __len__(self):
         return self.len
         # return 10
+
+    def __str__(self):
+        return 'Rssrai(split=' + str(self.type) + ')'
 
     def get_numpy_image(self, index):
         '''
@@ -129,10 +135,12 @@ class Rssrai(data.Dataset):
             return sample
         if self.type == 'valid':
             sample = self._read_file(self._label_name_list[index])
-            sample = self._label_enhance(sample)
+            sample = self._valid_enhance(sample)
             return sample
         if self.type == 'test':
-            return 1, 2
+            sample = self._read_test_file(self._img_name_list[index])
+            sample = self._test_enhance(sample)
+            return sample
 
     def _random_crop_and_enhance(self, sample):
         compose = A.Compose([
@@ -148,13 +156,22 @@ class Rssrai(data.Dataset):
         ], additional_targets={'image': 'image', 'label': 'mask'})
         return compose(**sample)
 
-    def _label_enhance(self, sample):
+    def _valid_enhance(self, sample):
         compose = A.Compose([
             A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
             A.CenterCrop(self.crop_size[0], self.crop_size[1], p=1),
             A.Normalize(mean=self.mean, std=self.std, p=1)
         ], additional_targets={'image': 'image', 'label': 'mask'})
         return compose(**sample)
+
+    def _test_enhance(self, sample):
+        compose = A.Compose([
+            A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
+            A.CenterCrop(self.crop_size[0], self.crop_size[1], p=1),
+            A.Normalize(mean=self.mean, std=self.std, p=1)
+        ], additional_targets={'image': 'image'})
+        sample['image'] = compose(image=sample["image"])['image']
+        return sample
 
     # @functools.lru_cache( maxsize=None )
     def _read_file(self, label_name):
@@ -168,16 +185,20 @@ class Rssrai(data.Dataset):
 
         return {'image': image_np, 'label': label_mask}
 
+    def _read_test_file(self, image_name):
+        image_pil = Image.open(os.path.join(self._image_dir, image_name))
+        image_np = np.array(image_pil)
+
+        return {'image': image_np, 'name': image_name}
+
     def _get_random_file_name(self):
         return random.choice(self._label_name_list)
 
     def transform(self, sample):
         sample['image'] = torch.from_numpy(sample['image']).permute(2, 0, 1)
-        sample['label'] = torch.from_numpy(sample['label']).long()
+        if self.type != "test":
+            sample['label'] = torch.from_numpy(sample['label']).long()
         return sample
-
-    def __str__(self):
-        return 'Rssrai(split=' + str(self.split) + ')'
 
     def decode_seg_map_sequence(self, label_masks):
         rgb_masks = []
@@ -202,9 +223,9 @@ class Rssrai(data.Dataset):
             g[label_mask == ll] = color_list[ll, 1]
             b[label_mask == ll] = color_list[ll, 2]
         rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], 3))
-        rgb[:, :, 0] = r / 255.0
-        rgb[:, :, 1] = g / 255.0
-        rgb[:, :, 2] = b / 255.0
+        rgb[:, :, 0] = r
+        rgb[:, :, 1] = g
+        rgb[:, :, 2] = b
         return rgb
 
     def encode_segmap(self, label_image):
@@ -263,7 +284,6 @@ def testData():
             #     f.write( str( segmap ) )
             plt.savefig(f"{test_path}/rssrai-{ii}-{jj}.jpg")
             plt.close('all')
-
 
         if ii == 3:
             break

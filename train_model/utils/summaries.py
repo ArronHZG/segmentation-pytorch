@@ -6,18 +6,28 @@ import torch
 from PIL import Image
 from tensorboardX import SummaryWriter
 
+from train_model.dataloader.rssrai_tools.split_rssrai import save_image, merge_rssrai_test_label_images
+
 
 class TensorboardSummary():
     def __init__(self, directory, dataset):
         self.directory = directory
         self.writer = SummaryWriter(logdir=os.path.join(self.directory))
         self.dataset = dataset
+
+        self.output_label_path = os.path.join(self.directory, "test_output")
+        if not os.path.exists(self.output_label_path):
+            os.makedirs(self.output_label_path)
+
+        self.merge_path = os.path.join(self.directory, "test_rgb_label")
+        if not os.path.exists(self.merge_path):
+            os.makedirs(self.merge_path)
         plt.axis('off')
 
     def visualize_image(self, image, target, output, epoch, batch_index):
         # image (B,C,H,W) To (B,H,W,C)
         image_np = image.cpu().numpy()
-        image_np = np.transpose(image_np, axes=[0,2,3,1])
+        image_np = np.transpose(image_np, axes=[0, 2, 3, 1])
         image_np *= self.dataset.std
         image_np += self.dataset.mean
         image_np *= 255.0
@@ -36,7 +46,7 @@ class TensorboardSummary():
         # blank.fill(255)
 
         for i in range(min(3, image_np.shape[0])):
-            img_tmp=image_np[i]
+            img_tmp = image_np[i]
             img_rgb_tmp = np.array(Image.fromarray(img_tmp).convert("RGB"))
             target_rgb_tmp = self.dataset.decode_segmap(target[i])
             output_rgb_tmp = self.dataset.decode_segmap(output[i])
@@ -49,7 +59,7 @@ class TensorboardSummary():
             plt.subplot(133)
             plt.imshow(output_rgb_tmp)
 
-            path = f'{self.directory}/epoch_{epoch}'
+            path = os.path.join(self.directory,"train_image",f'epoch_{epoch}')
             if not os.path.exists(path):
                 os.makedirs(path)
             plt.savefig(f"{path}/{batch_index}-{i}.jpg")
@@ -75,3 +85,28 @@ class TensorboardSummary():
         #                       cat_image,
         #                           dataformats = "HWC"
         #                       )
+
+    def save_test_image(self, name_list, output):
+        # output (B,C,H,W) to (B,H,W)
+        # print(output.size())
+        output = torch.argmax(output, dim=1).cpu().numpy()
+        # print(output.shape)
+        # print(output)
+        for i, name in enumerate(name_list):
+            output_rgb_tmp = self.dataset.decode_segmap(output[i])
+            # print(output_rgb_tmp)
+            save_image(output_rgb_tmp, self.output_label_path, name, "RGB")
+
+        # mean = (0.52891074, 0.38070734, 0.40119018, 0.36884733)
+        # std = (0.24007008, 0.23784, 0.22267079, 0.21865861)
+        #
+        # # image (B,C,H,W) To (B,H,W,C)
+        # image_np = output.cpu().numpy()
+        # image_np = np.transpose(image_np, axes=[0, 2, 3, 1])
+        # image_np *= std
+        # image_np += mean
+        # image_np *= 255.0
+        # image_np = image_np.astype(np.uint8)
+
+    def merge(self):
+        merge_rssrai_test_label_images(self.output_label_path, self.merge_path)
