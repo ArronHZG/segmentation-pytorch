@@ -70,7 +70,7 @@ color_list = np.array([[0, 200, 0],
 class Rssrai(data.Dataset):
     NUM_CLASSES = 16
 
-    def __init__(self, type='train', base_size=(512, 512), crop_size=(512, 512), base_dir=Path.db_root_dir('rssrai')):
+    def __init__(self, type='train', base_size=(512, 512), crop_size=(256, 256), base_dir=Path.db_root_dir('rssrai')):
 
         super().__init__()
         self._base_dir = base_dir
@@ -137,8 +137,8 @@ class Rssrai(data.Dataset):
     def _random_crop_and_enhance(self, sample):
         compose = A.Compose([
             A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
-            A.RandomSizedCrop((512,512),self.crop_size[0], self.crop_size[1], p=1),
-            # A.RandomCrop(self.crop_size[0], self.crop_size[1], p=1),
+            # A.RandomSizedCrop((512,512),self.crop_size[0], self.crop_size[1], p=1),
+            A.RandomCrop(self.crop_size[0], self.crop_size[1], p=1),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.RGBShift(),
@@ -225,45 +225,48 @@ class Rssrai(data.Dataset):
 
 
 def testData():
+    plt.rcParams['savefig.dpi'] = 500  # 图片像素
+    plt.rcParams['figure.dpi'] = 500  # 分辨率
+
     test_path = os.path.join(Path().db_root_dir("rssrai"), "测试输出")
     if not os.path.exists(test_path):
         os.makedirs(test_path)
 
-    rssrai = Rssrai(type="valid")
+    rssrai = Rssrai(type="train")
     for i in rssrai:
         pprint(i["image"].shape)
         pprint(i["label"].shape)
         break
-    data_loader = DataLoader(rssrai, batch_size=4, shuffle=True, num_workers=0)
+    data_loader = DataLoader(rssrai, batch_size=4, shuffle=True, num_workers=4)
 
     for ii, sample in enumerate(data_loader):
-        pass
-        # sample['image'] = sample['image'][:, 1:, :, :]
-        # for jj in range(sample["image"].size()[0]):
-        #     img = sample['image'].numpy()
-        #     gt = sample['label'].numpy()
-        #     img_tmp = np.transpose(img[jj], axes=[1, 2, 0])
-        #     tmp = gt[jj]
-        #     segmap = rssrai.decode_segmap(tmp)
-        #     img_tmp *= rssrai.std[1:]
-        #     img_tmp += rssrai.mean[1:]
-        #     img_tmp *= 255.0
-        #     img_tmp = img_tmp.astype(np.uint8)
-        #     plt.figure()
-        #     plt.title('display')
-        #     plt.subplot(121)
-        #     plt.imshow(img_tmp)
-        #     plt.subplot(122)
-        #     plt.imshow(segmap)
-        #     # with open( f"{test_path}/rssrai-{ii}-{jj}.txt", "w" ) as f:
-        #     #     f.write( str( img_tmp ) )
-        #     #     f.write( str( tmp ) )
-        #     #     f.write( str( segmap ) )
-        #     plt.savefig(f"{test_path}/rssrai-{ii}-{jj}.jpg")
-        #
-        # if ii == 0:
-        #     break
-        print(ii)
+        sample['image'] = sample['image'][:, 1:, :, :]
+        for jj in range(sample["image"].size()[0]):
+            img = sample['image'].numpy()
+            gt = sample['label'].numpy()
+            img_tmp = np.transpose(img[jj], axes=[1, 2, 0])
+            tmp = gt[jj]
+            segmap = rssrai.decode_segmap(tmp)
+            img_tmp *= rssrai.std[1:]
+            img_tmp += rssrai.mean[1:]
+            img_tmp *= 255.0
+            img_tmp = img_tmp.astype(np.uint8)
+            plt.figure()
+            plt.title('display')
+            plt.subplot(121)
+            plt.imshow(img_tmp)
+            plt.subplot(122)
+            plt.imshow(segmap)
+            # with open( f"{test_path}/rssrai-{ii}-{jj}.txt", "w" ) as f:
+            #     f.write( str( img_tmp ) )
+            #     f.write( str( tmp ) )
+            #     f.write( str( segmap ) )
+            plt.savefig(f"{test_path}/rssrai-{ii}-{jj}.jpg")
+            plt.close('all')
+
+
+        if ii == 3:
+            break
 
     plt.show(block=True)
 

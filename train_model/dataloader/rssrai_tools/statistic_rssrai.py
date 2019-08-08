@@ -128,7 +128,7 @@ def testTrainLabel():
     df.to_csv( os.path.join( base_path, "train_label.csv" ) )
 
 
-def test_valid_label():
+def split_label(name):
     print( color_name_map )
     name_list = ["文件名"]
     for _, v in color_name_map.items():
@@ -136,7 +136,7 @@ def test_valid_label():
     print( name_list )
     all_statistic_list = []
     base_path = Path.db_root_dir( "rssrai" )
-    image_path = os.path.join( base_path, "split_train", "label" )
+    image_path = os.path.join( base_path, name, "label" )
     from glob import glob
     image_list = glob( os.path.join( image_path, "*.tif" ) )
     # 多进程
@@ -151,8 +151,12 @@ def test_valid_label():
 
     df = pd.DataFrame( all_statistic_list, columns=name_list )
     print( df )
-    df.to_csv( os.path.join( "valid_label.csv" ) )
+    df.to_csv( os.path.join( f"{name}.csv" ) )
 
 
 if __name__ == '__main__':
-    test_valid_label()
+    name = 'split_train'
+    split_label(name)
+
+    name = 'split_valid'
+    split_label(name)
