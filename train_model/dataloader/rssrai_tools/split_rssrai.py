@@ -118,7 +118,7 @@ def merge_image(image_path,
 
     for h in range(h_num):
         for w in range(w_num):
-            file_image = Image.open(os.path.join(image_path, f"{image_name[:-4]}_{h}_{w}.tif"))
+            file_image = Image.open(os.path.join(image_path, f"{image_name[:-10]}_{h}_{w}_label.tif"))
             np_image = np.array(file_image)
             output_image[h * input_image_h_w[0]:(h + 1) * input_image_h_w[0],
             w * input_image_h_w[1]:(w + 1) * input_image_h_w[1], :] += np_image
@@ -126,7 +126,7 @@ def merge_image(image_path,
         # 当高超出时
         if output_image_h_w[0] % input_image_h_w[0] != 0:
             for w in range(w_num):
-                file_image = Image.open(os.path.join(image_path, f"{image_name[:-4]}_{h_num}_{w}.tif"))
+                file_image = Image.open(os.path.join(image_path, f"{image_name[:-10]}_{h_num}_{w}_label.tif"))
                 np_image = np.array(file_image)
                 output_image[-input_image_h_w[0]:,
                 w * input_image_h_w[1]:(w + 1) * input_image_h_w[1], :] = 0
@@ -136,7 +136,7 @@ def merge_image(image_path,
         # 当宽超出时
         if output_image_h_w[1] % input_image_h_w[1] != 0:
             for h in range(h_num):
-                file_image = Image.open(os.path.join(image_path, f"{image_name[:-4]}_{h}_{w_num}.tif"))
+                file_image = Image.open(os.path.join(image_path, f"{image_name[:-10]}_{h}_{w_num}_label.tif"))
                 np_image = np.array(file_image)
                 output_image[h * input_image_h_w[0]:(h + 1) * input_image_h_w[0],
                 -input_image_h_w[1]:, :] = 0
@@ -145,7 +145,7 @@ def merge_image(image_path,
 
         # 右下角
         if output_image_h_w[0] % input_image_h_w[0] != 0 and output_image_h_w[1] % input_image_h_w[1] != 0:
-            file_image = Image.open(os.path.join(image_path, f"{image_name[:-4]}_{h_num}_{w_num}.tif"))
+            file_image = Image.open(os.path.join(image_path, f"{image_name[:-10]}_{h_num}_{w_num}_label.tif"))
             np_image = np.array(file_image)
             output_image[-input_image_h_w[0]:, -input_image_h_w[1]:, :] = 0
             output_image[-input_image_h_w[0]:, -input_image_h_w[1]:, :] += np_image
@@ -325,5 +325,5 @@ if __name__ == '__main__':
     # print(len(li))
     # test_one_spilt_test_image()
     # test_one_merge_image()
-    # test_spilt_test_image()
-    test_merge_images()
+    test_spilt_test_image()
+    # test_merge_images()

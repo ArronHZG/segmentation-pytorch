@@ -49,7 +49,7 @@ class SegBaseModule(nn.Module):
         elif backbone_name == 'se_resnet34':
             return ResNet34(use_se=True)
         elif backbone_name == 'resnet50':
-            return ResNet50S()
+            return ResNet50S(in_c=in_c)
         elif backbone_name == 'se_resnet50':
             return ResNet50S(use_se=True)
         elif backbone_name == 'selu_se_resnet50':

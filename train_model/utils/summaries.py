@@ -95,6 +95,8 @@ class TensorboardSummary():
         for i, name in enumerate(name_list):
             output_rgb_tmp = self.dataset.decode_segmap(output[i])
             # print(output_rgb_tmp)
+            name = f'{name[:-4]}_label.tif'
+            # print(name)
             save_image(output_rgb_tmp, self.output_label_path, name, "RGB")
 
         # mean = (0.52891074, 0.38070734, 0.40119018, 0.36884733)
