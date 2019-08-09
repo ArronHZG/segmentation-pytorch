@@ -309,7 +309,7 @@ def merge_rssrai_test_label_images(image_path, save_image_path):
     name_list = df['name'].tolist()
     for name in tqdm(name_list):
         merge_image(image_path,
-                    name,
+                    name[:-4]+"_label.tif",
                     save_image_path,
                     "RGB")
 
