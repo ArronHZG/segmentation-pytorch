@@ -75,14 +75,15 @@ if __name__ == "__main__":
     args = Options().parse()
 
     args.dataset = 'rssrai'
-    args.model = 'PSPNet'
-    args.backbone = 'resnet50'
-    args.batch_size = 100
+    args.model = 'DeepLabV3Plus'
+    args.backbone = 'selu_se_resnet50'
+    args.check_point_id = 17
+    args.batch_size = 32
     args.base_size = 256
     args.crop_size = 256
     args.optim = "Adam"
     args.apex = 2
-    args.epochs = 300
+    args.epochs=300
     # args.lr=0.01
 
     print(args)

@@ -52,7 +52,7 @@ class Trainer():
         if self.args.check_point_id != None:
             self.best_pred, self.start_epoch, model_state_dict, optimizer_state_dict = self.saver.load_checkpoint()
             self.model.load_state_dict( model_state_dict )
-            self.optimizer.load_state_dict( optimizer_state_dict )
+            # self.optimizer.load_state_dict( optimizer_state_dict )
 
         # self.criterion = loss.CrossEntropyLossWithOHEM( 0.7 )
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=255)
@@ -192,13 +192,13 @@ if __name__ == "__main__":
     args.model = 'DeepLabV3Plus'
     args.backbone = 'selu_se_resnet50'
     args.check_point_id = 17
-    args.batch_size = 70
+    args.batch_size = 40
     args.base_size = 256
     args.crop_size = 256
     args.optim = "Adam"
-    args.apex = 2
-    args.epochs=300
-    # args.lr=0.01
+    args.apex = 0
+    args.epochs=500
+    args.lr=0.01
 
 
     print( args )
