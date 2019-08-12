@@ -54,6 +54,8 @@ class SegBaseModule(nn.Module):
             return ResNet50S(use_se=True)
         elif backbone_name == 'selu_se_resnet50':
             return SeLUResNet50S(in_c=in_c, use_se=True)
+        elif backbone_name == 'selu_se_resnet101':
+            return SeLUResNet50S(in_c=in_c, use_se=True)
         elif backbone_name == 'mobilenet_v2':
             return MobileNetV2()
         elif backbone_name == 'xception':
@@ -64,9 +66,9 @@ class SegBaseModule(nn.Module):
     def _init_params(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight,
-                                        mode='fan_out',
-                                        nonlinearity='relu')
+                # nn.init.kaiming_normal_(m.weight,
+                #                         mode='fan_out',
+                #                         nonlinearity='relu')
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             if isinstance(m, nn.BatchNorm2d):

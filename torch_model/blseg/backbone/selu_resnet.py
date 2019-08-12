@@ -196,3 +196,51 @@ class ResNet50S(BackboneBaseModule):
         self.stage4[0].conv2.stride = (params[1], params[1])
         self.stage4[0].residual[0].kernel_size = params[1]
         self.stage4[0].residual[0].stride = params[1]
+
+
+class ResNet101S(BackboneBaseModule):
+
+    def __init__(self, in_c, use_se=False):
+        super(ResNet101S, self).__init__()
+        self.channels = [64, 256, 512, 1024, 2048]
+        self.strides = [2, 4, 8, 16, 32]
+        self.stage0 = nn.Sequential(
+            conv3x3(in_c, 32, 2),
+            nn.BatchNorm2d(32),
+            nn.SELU(inplace=True),
+            conv3x3(32, 32),
+            nn.BatchNorm2d(32),
+            nn.SELU(inplace=True),
+            conv3x3(32, self.channels[0]),
+            nn.BatchNorm2d(self.channels[0]),
+            nn.SELU(inplace=True),
+        )
+        self.stage1 = nn.Sequential(nn.MaxPool2d(3, stride=2, padding=1))
+        for layer in _add_stage(ResidualBlock, self.channels[0],
+                                self.channels[1], 1, use_se, 3):
+            self.stage1.add_module(str(len(self.stage1)), layer)
+        self.stage2 = _add_stage(ResidualBlock, self.channels[1],
+                                 self.channels[2], 2, use_se, 4)
+        self.stage3 = _add_stage(ResidualBlock, self.channels[2],
+                                 self.channels[3], 2, use_se, 23)
+        self.stage4 = _add_stage(ResidualBlock, self.channels[3],
+                                 self.channels[4], 2, use_se, 3)
+
+        self._init_params()
+
+    def forward(self, x):
+        x = self.stage0(x)  # 64, 1/2
+        x = self.stage1(x)  # 256, 1/4
+        x = self.stage2(x)  # 512, 1/8
+        x = self.stage3(x)  # 1024, 1/16
+        x = self.stage4(x)  # 2048, 1/32
+        return x
+
+    def _change_downsample(self, params):
+        self.stage3[0].conv2.stride = (params[0], params[0])
+        self.stage3[0].residual[0].kernel_size = params[0]
+        self.stage3[0].residual[0].stride = params[0]
+        self.stage4[0].conv2.stride = (params[1], params[1])
+        self.stage4[0].residual[0].kernel_size = params[1]
+        self.stage4[0].residual[0].stride = params[1]
+
