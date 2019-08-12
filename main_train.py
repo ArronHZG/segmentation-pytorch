@@ -70,11 +70,11 @@ class Trainer():
         self.Metric = namedtuple( 'Metric', 'pixacc miou kappa' )
 
         self.train_metric = self.Metric( miou=metric.MeanIoU( self.class_num ),
-                                         pixacc=metric.Kappa( self.class_num ),
+                                         pixacc=metric.PixelAccuracy(),
                                          kappa=metric.Kappa( self.class_num ) )
 
         self.valid_metric = self.Metric( miou=metric.MeanIoU( self.class_num ),
-                                         pixacc=metric.Kappa( self.class_num ),
+                                         pixacc=metric.PixelAccuracy(),
                                          kappa=metric.Kappa( self.class_num ) )
 
     def training(self, epoch):

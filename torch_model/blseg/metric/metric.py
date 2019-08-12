@@ -114,5 +114,11 @@ def testKappa():
     print(mean.get())
 
 
+    acc =PixelAccuracy()
+    acc.update(out,tar)
+    print(acc.get())
+
+
+
 if __name__ == '__main__':
     testKappa()
