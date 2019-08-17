@@ -28,8 +28,8 @@ class TensorboardSummary():
         # image (B,C,H,W) To (B,H,W,C)
         image_np = image.cpu().numpy()
         image_np = np.transpose(image_np, axes=[0, 2, 3, 1])
-        image_np *= self.dataset.std
-        image_np += self.dataset.mean
+        image_np *= self.dataset.std[1:]
+        image_np += self.dataset.mean[1:]
         image_np *= 255.0
         image_np = image_np.astype(np.uint8)
 
