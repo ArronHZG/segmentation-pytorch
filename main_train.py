@@ -189,14 +189,14 @@ if __name__ == "__main__":
 
 
     args.dataset = 'rssrai'
-    args.model = 'DeepLabV3Plus'
-    args.backbone = 'selu_se_resnet101'
+    args.model = 'FCN'
+    args.backbone = 'resnet101'
     # args.check_point_id = 1
     args.batch_size = 40
     args.base_size = 256
     args.crop_size = 256
-    args.optim = "Adam"
-    args.apex = 0
+    args.optim = "SGD"
+    args.apex = 2
     args.epochs=500
     # args.lr=0.01
 

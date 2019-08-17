@@ -128,19 +128,19 @@ class Rssrai(data.Dataset):
         验证集按顺序选取
         测试集按顺序选取
         '''
+        sample = None
         if self.type == 'train':
             name = self._get_random_file_name()
             sample = self._read_file(name)
             sample = self._random_crop_and_enhance(sample)
-            return sample
         if self.type == 'valid':
             sample = self._read_file(self._label_name_list[index])
             sample = self._valid_enhance(sample)
-            return sample
         if self.type == 'test':
             sample = self._read_test_file(self._img_name_list[index])
             sample = self._test_enhance(sample)
-            return sample
+        del sample["train"][0, :, :]
+        return sample
 
     def _random_crop_and_enhance(self, sample):
         compose = A.Compose([
