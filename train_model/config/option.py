@@ -7,9 +7,9 @@ class Options():
     def __init__(self):
         parser = argparse.ArgumentParser(description='PyTorch \
             Segmentation')
-        # model and dataset
-        parser.add_argument('--model', type=str, default='DeepLabV3Plus',
-                            help='model name (default: DeepLabV3Plus)')
+        # net and dataset
+        parser.add_argument('--net', type=str, default='DeepLabV3Plus',
+                            help='net name (default: DeepLabV3Plus)')
         parser.add_argument('--backbone', type=str, default='resnet50',
                             help='backbone name (default: resnet50)')
         parser.add_argument('--dataset', type=str, default='rssrai',
@@ -21,9 +21,9 @@ class Options():
         parser.add_argument('--crop-size', type=int, default=512,
                             help='crop image size')
         parser.add_argument('--pretrained', action='store_true', default=False,
-                            help='model name (default: False)')
+                            help='net name (default: False)')
         parser.add_argument('--pretrained-weight-path', type=str, default=None,
-                            help='model name (default: None)')
+                            help='net name (default: None)')
         # training hyper params
 
         # parser.add_argument('--aux', action='store_true', default= False,
@@ -57,11 +57,11 @@ class Options():
         # apex  a Pytorch extension with NVIDIA-maintained utilities to streamline mixed precision and distributed training
         parser.add_argument('--apex', type=int, default=2, choices=[0, 1, 2, 3], help='Automatic Mixed Precision')
 
-        # # finetuning pre-trained model
+        # # finetuning pre-trained net
         # parser.add_argument('--ft', action='store_true', default= False,
         #                     help='finetuning on a different dataset')
         # parser.add_argument('--ft-resume', type=str, default=None,
-        #                     help='put the path of trained model to finetune if needed ')
+        #                     help='put the path of trained net to finetune if needed ')
         # parser.add_argument('--pre-class', type=int, default=None,
         #                     help='num of pre-trained classes \
         #                     (default: None)')

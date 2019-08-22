@@ -4,7 +4,7 @@ import torchvision
 from torch import nn
 import time
 
-from torch_model.model.nn import Network
+from torch_model.net.nn import Network
 
 
 def calc_acc(x, y):

@@ -1,6 +1,6 @@
 from torch import nn
 
-from torch_model.model.nn import NONLocalBlock2D
+from torch_model.net.nn import NONLocalBlock2D
 
 
 class Network(nn.Module):

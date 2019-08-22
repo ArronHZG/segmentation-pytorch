@@ -139,7 +139,7 @@ class Rssrai(data.Dataset):
         if self.type == 'test':
             sample = self._read_test_file(self._img_name_list[index])
             sample = self._test_enhance(sample)
-        del sample["train"][0, :, :]
+        sample["image"] = sample["image"][:, :, 1:]
         return sample
 
     def _random_crop_and_enhance(self, sample):
