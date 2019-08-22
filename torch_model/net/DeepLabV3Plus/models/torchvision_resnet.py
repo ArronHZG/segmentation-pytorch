@@ -147,7 +147,7 @@ class ResNet(nn.Module):
 
         # Zero-initialize the last BN in each residual branch,
         # so that the residual branch starts with zeros, and each residual block behaves like an identity.
-        # This improves the net by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
+        # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
         if zero_init_residual:
             for m in self.modules():
                 if isinstance(m, Bottleneck):
@@ -207,10 +207,10 @@ def _resnet(arch, block, layers, pretrained, progress, **kwargs):
 
 
 def resnet18(pretrained=False, progress=True, **kwargs):
-    """Constructs a ResNet-18 net.
+    """Constructs a ResNet-18 model.
 
     Args:
-        pretrained (bool): If True, returns a net pre-trained on ImageNet
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
     return _resnet('resnet18', BasicBlock, [2, 2, 2, 2], pretrained, progress,
@@ -218,10 +218,10 @@ def resnet18(pretrained=False, progress=True, **kwargs):
 
 
 def resnet34(pretrained=False, progress=True, **kwargs):
-    """Constructs a ResNet-34 net.
+    """Constructs a ResNet-34 model.
 
     Args:
-        pretrained (bool): If True, returns a net pre-trained on ImageNet
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
     return _resnet('resnet34', BasicBlock, [3, 4, 6, 3], pretrained, progress,
@@ -229,10 +229,10 @@ def resnet34(pretrained=False, progress=True, **kwargs):
 
 
 def resnet50(pretrained=False, progress=True, **kwargs):
-    """Constructs a ResNet-50 net.
+    """Constructs a ResNet-50 model.
 
     Args:
-        pretrained (bool): If True, returns a net pre-trained on ImageNet
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
     return _resnet('resnet50', Bottleneck, [3, 4, 6, 3], pretrained, progress,
@@ -240,10 +240,10 @@ def resnet50(pretrained=False, progress=True, **kwargs):
 
 
 def resnet101(pretrained=False, progress=True, **kwargs):
-    """Constructs a ResNet-101 net.
+    """Constructs a ResNet-101 model.
 
     Args:
-        pretrained (bool): If True, returns a net pre-trained on ImageNet
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
     return _resnet('resnet101', Bottleneck, [3, 4, 23, 3], pretrained, progress,
@@ -251,10 +251,10 @@ def resnet101(pretrained=False, progress=True, **kwargs):
 
 
 def resnet152(pretrained=False, progress=True, **kwargs):
-    """Constructs a ResNet-152 net.
+    """Constructs a ResNet-152 model.
 
     Args:
-        pretrained (bool): If True, returns a net pre-trained on ImageNet
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
     return _resnet('resnet152', Bottleneck, [3, 8, 36, 3], pretrained, progress,
@@ -262,10 +262,10 @@ def resnet152(pretrained=False, progress=True, **kwargs):
 
 
 def resnext50_32x4d(pretrained=False, progress=True, **kwargs):
-    """Constructs a ResNeXt-50 32x4d net.
+    """Constructs a ResNeXt-50 32x4d model.
 
     Args:
-        pretrained (bool): If True, returns a net pre-trained on ImageNet
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
     kwargs['groups'] = 32
@@ -275,10 +275,10 @@ def resnext50_32x4d(pretrained=False, progress=True, **kwargs):
 
 
 def resnext101_32x8d(pretrained=False, progress=True, **kwargs):
-    """Constructs a ResNeXt-101 32x8d net.
+    """Constructs a ResNeXt-101 32x8d model.
 
     Args:
-        pretrained (bool): If True, returns a net pre-trained on ImageNet
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
     kwargs['groups'] = 32

@@ -6,7 +6,7 @@ from .utils import initialize_weights
 
 ''' 
 -> (Aligned) Xception BackBone
-Pretrained net from https://github.com/Cadene/pretrained-models.pytorch
+Pretrained model from https://github.com/Cadene/pretrained-models.pytorch
 by Remi Cadene
 '''
 

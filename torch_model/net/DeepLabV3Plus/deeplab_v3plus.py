@@ -1,11 +1,12 @@
 from itertools import chain
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .models import getBackBone
-from .models.aspp import ASSP
-from .models.decoder import Decoder
+from models import getBackBone
+from models.aspp import ASSP
+from models.decoder import Decoder
 
 
 class DeepLabV3Plus(nn.Module):
@@ -17,7 +18,7 @@ class DeepLabV3Plus(nn.Module):
                                                         pretrained=pretrained)
 
         self.ASSP = ASSP(in_channels=2048, output_stride=output_stride)
-        
+
         self.decoder = Decoder(low_level_channels, num_classes)
 
         if freeze_bn:
@@ -45,3 +46,13 @@ class DeepLabV3Plus(nn.Module):
     def freeze_bn(self):
         for module in self.modules():
             if isinstance(module, nn.BatchNorm2d): module.eval()
+
+
+if __name__ == '__main__':
+    m,_ = getBackBone("xception", output_stride=8, pretrained=False)
+    print(m)
+    x = torch.rand((1, 3, 256, 256))
+    print(x.shape)
+    a, b = m(x)
+    print(a.shape)
+    print(b.shape)
