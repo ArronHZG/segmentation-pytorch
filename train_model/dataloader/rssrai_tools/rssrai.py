@@ -88,20 +88,20 @@ class Rssrai(data.Dataset):
         if self.type == 'train':
             # train_csv = os.path.join(self._base_dir, 'train_set.csv')
             # self._label_name_list = pd.read_csv(train_csv)["文件名"].values.tolist()
-            self._label_path_list = glob(os.path.join(self._base_dir, 'split_train', 'label', '*.tif'))
             # print(self._label_path_list)
-            self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
             # print(self._label_name_list)
             self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
             self._label_dir = os.path.join(self._base_dir, 'split_train', 'label')
+            self._label_path_list = glob(os.path.join(self._label_dir, '*.tif'))
+            self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
 
-            self.len = 14000
+            self.len = 140
 
         if self.type == 'valid':
-            self._label_path_list = glob(os.path.join(self._base_dir, 'split_valid_256', 'label', '*.tif'))
+            self._image_dir = os.path.join(self._base_dir, 'split_valid', 'img')
+            self._label_dir = os.path.join(self._base_dir, 'split_valid', 'label')
+            self._label_path_list = glob(os.path.join(self._label_dir, '*.tif'))
             self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
-            self._image_dir = os.path.join(self._base_dir, 'split_valid_256', 'img')
-            self._label_dir = os.path.join(self._base_dir, 'split_valid_256', 'label')
             # self._label_name_list = pd.read_csv( valid_csv )["文件名"].values.tolist()
 
             self.len = len(self._label_name_list)
@@ -158,8 +158,8 @@ class Rssrai(data.Dataset):
 
     def _valid_enhance(self, sample):
         compose = A.Compose([
-            A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
-            A.CenterCrop(self.crop_size[0], self.crop_size[1], p=1),
+            # A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
+            # A.CenterCrop(self.crop_size[0], self.crop_size[1], p=1),
             A.Normalize(mean=self.mean, std=self.std, p=1)
         ], additional_targets={'image': 'image', 'label': 'mask'})
         return compose(**sample)
