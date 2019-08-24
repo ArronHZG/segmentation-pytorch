@@ -139,7 +139,7 @@ class Rssrai(data.Dataset):
         if self.type == 'test':
             sample = self._read_test_file(self._img_name_list[index])
             sample = self._test_enhance(sample)
-        sample["image"] = sample["image"][:, :, 1:]
+        # sample["image"] = sample["image"][:, :, 1:]
         return sample
 
     def _random_crop_and_enhance(self, sample):
@@ -261,6 +261,7 @@ def testData():
     data_loader = DataLoader(rssrai, batch_size=4, shuffle=True, num_workers=4)
 
     for ii, sample in enumerate(data_loader):
+        print(sample['image'].shape)
         sample['image'] = sample['image'][:, 1:, :, :]
         for jj in range(sample["image"].size()[0]):
             img = sample['image'].numpy()

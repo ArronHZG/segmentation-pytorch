@@ -9,6 +9,7 @@ class ResNet(nn.Module):
                  zero_init_residual=False):
         super(ResNet, self).__init__()
         model = getattr(torchvision_resnet, backbone)(pretrained)
+
         if in_channels != 3:
             self.layer0 = nn.Sequential(
                 nn.Conv2d(in_channels, 64, 7, stride=2, padding=3, bias=False),
