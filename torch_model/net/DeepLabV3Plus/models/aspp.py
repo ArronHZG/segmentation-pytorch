@@ -2,8 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
-# from .utils import initialize_weights
+from .utils import initialize_weights
 
 
 def assp_branch(in_channels, out_channles, kernel_size, dilation):
@@ -50,7 +49,7 @@ class ASSP(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.dropout = nn.Dropout(0.5)
 
-        # initialize_weights(self)
+        initialize_weights(self)
 
     def forward(self, x):
         x1 = self.aspp1(x)
