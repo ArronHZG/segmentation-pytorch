@@ -67,4 +67,6 @@ class ResNet(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
 
+
+
         return x, low_level_features
