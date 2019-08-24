@@ -95,7 +95,7 @@ class Rssrai(data.Dataset):
             self._label_path_list = glob(os.path.join(self._label_dir, '*.tif'))
             self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
 
-            self.len = 140
+            self.len = 9000
 
         if self.type == 'valid':
             self._image_dir = os.path.join(self._base_dir, 'split_valid', 'img')

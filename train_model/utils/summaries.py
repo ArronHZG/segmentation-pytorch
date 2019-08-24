@@ -47,17 +47,17 @@ class TensorboardSummary():
 
         for i in range(min(3, image_np.shape[0])):
             img_tmp = image_np[i]
-            img_rgb_tmp = np.array(Image.fromarray(img_tmp).convert("RGB"))
-            target_rgb_tmp = self.dataset.decode_segmap(target[i])
-            output_rgb_tmp = self.dataset.decode_segmap(output[i])
+            img_rgb_tmp = np.array(Image.fromarray(img_tmp).convert("RGB")).astype(np.uint8)
+            target_rgb_tmp = self.dataset.decode_segmap(target[i]).astype(np.uint8)
+            output_rgb_tmp = self.dataset.decode_segmap(output[i]).astype(np.uint8)
             plt.figure()
             plt.title('display')
             plt.subplot(131)
-            plt.imshow(img_rgb_tmp)
+            plt.imshow(img_rgb_tmp,vmin=0,vmax=255)
             plt.subplot(132)
-            plt.imshow(target_rgb_tmp)
+            plt.imshow(target_rgb_tmp,vmin=0,vmax=255)
             plt.subplot(133)
-            plt.imshow(output_rgb_tmp)
+            plt.imshow(output_rgb_tmp,vmin=0,vmax=255)
 
             path = os.path.join(self.directory,"train_image",f'epoch_{epoch}')
             if not os.path.exists(path):

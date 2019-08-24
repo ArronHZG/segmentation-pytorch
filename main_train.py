@@ -58,8 +58,8 @@ class Trainer():
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=255)
 
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau( self.optimizer, 'max',
-                                                                     factor=0.9,
-                                                                     patience=3,
+                                                                     factor=0.8,
+                                                                     patience=10,
                                                                      verbose=True )
         if self.args.cuda:
             self.model = self.model.cuda()
