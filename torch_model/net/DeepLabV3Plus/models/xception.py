@@ -84,13 +84,15 @@ class Xception(nn.Module):
     def __init__(self, output_stride=16, in_channels=3, pretrained=True):
         super(Xception, self).__init__()
 
+        self.in_channels = in_channels
+
         # Stride for block 3 (entry flow), and the dilation rates for middle flow and exit flow
         b3_s, mf_d, ef_d = None, None, None
         if output_stride == 16: b3_s, mf_d, ef_d = 2, 1, (1, 2)
         if output_stride == 8: b3_s, mf_d, ef_d = 1, 2, (2, 4)
 
         # Entry Flow
-        self.conv1 = nn.Conv2d(in_channels, 32, 3, 2, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(self.in_channels, 32, 3, 2, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(32)
         self.relu = nn.LeakyReLU(inplace=True)
         self.conv2 = nn.Conv2d(32, 64, 3, 1, padding=1, bias=False)
@@ -171,9 +173,9 @@ class Xception(nn.Module):
         pretrained_weights = model_zoo.load_url(url)
         state_dict = self.state_dict()
         model_dict = {}
-
         for k, v in pretrained_weights.items():
             if k in state_dict:
+
                 if 'pointwise' in k:
                     v = v.unsqueeze(-1).unsqueeze(-1)  # [C, C] -> [C, C, 1, 1]
                 if k.startswith('block11'):
@@ -190,8 +192,10 @@ class Xception(nn.Module):
                     model_dict[k.replace('conv4', 'conv5')] = v
                 elif k.startswith('bn4'):
                     model_dict[k.replace('bn4', 'bn5')] = v
+                elif "conv1.weight" in k and self.in_channels != 3:
+                    pass
                 else:
                     model_dict[k] = v
 
         state_dict.update(model_dict)
-        self.load_state_dict(state_dict)
+        self.load_state_dict(state_dict, strict=False)

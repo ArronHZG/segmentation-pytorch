@@ -189,10 +189,10 @@ if __name__ == "__main__":
 
 
     args.dataset = 'rssrai'
-    args.model = 'FCN'
-    args.backbone = 'resnet101'
+    args.model = 'DeepLabV3Plus'
+    args.backbone = 'xception'
     # args.check_point_id = 1
-    args.batch_size = 70
+    args.batch_size = 40
     args.base_size = 256
     args.crop_size = 256
     args.optim = "SGD"
