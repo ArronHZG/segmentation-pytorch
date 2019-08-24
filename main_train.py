@@ -192,7 +192,7 @@ if __name__ == "__main__":
     args.model = 'DeepLabV3Plus'
     args.backbone = 'xception'
     # args.check_point_id = 1
-    args.batch_size = 40
+    args.batch_size = 18
     args.base_size = 256
     args.crop_size = 256
     args.optim = "SGD"
