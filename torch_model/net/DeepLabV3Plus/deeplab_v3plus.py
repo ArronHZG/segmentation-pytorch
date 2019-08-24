@@ -4,9 +4,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models import getBackBone
-from models.aspp import ASSP
-from models.decoder import Decoder
+from .models import getBackBone
+from .models.aspp import ASSP
+from .models.decoder import Decoder
 
 
 class DeepLabV3Plus(nn.Module):

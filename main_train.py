@@ -192,13 +192,13 @@ if __name__ == "__main__":
     args.model = 'FCN'
     args.backbone = 'resnet101'
     # args.check_point_id = 1
-    args.batch_size = 37
+    args.batch_size = 64
     args.base_size = 256
     args.crop_size = 256
     args.optim = "SGD"
     args.apex = 2
     args.epochs=500
-    # args.lr=0.01
+    args.lr=0.1
 
 
     print( args )

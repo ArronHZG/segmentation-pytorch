@@ -6,7 +6,7 @@ from torch_model.net.DeepLabV3Plus.deeplab_v3plus import DeepLabV3Plus
 
 
 def get_model(model_name, backbone, num_classes, in_c):
-    assert model_name in ['DeepLabV3Plus', 'PSPNet']
+    assert model_name in ['DeepLabV3Plus', 'PSPNet','FCN']
     if model_name == 'DeepLabV3Plus':
         return DeepLabV3Plus(num_classes, in_channels=in_c, backbone=backbone)
     if model_name == 'PSPNet':
