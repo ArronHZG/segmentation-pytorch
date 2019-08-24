@@ -49,7 +49,7 @@ class DeepLabV3Plus(nn.Module):
 
 
 if __name__ == '__main__':
-    m,_ = getBackBone("xception", output_stride=8, pretrained=False)
+    m, _ = getBackBone("xception", 3, output_stride=8, pretrained=False)
     print(m)
     x = torch.rand((1, 3, 256, 256))
     print(x.shape)
