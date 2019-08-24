@@ -192,7 +192,7 @@ if __name__ == "__main__":
     args.model = 'FCN'
     args.backbone = 'resnet101'
     # args.check_point_id = 1
-    args.batch_size = 32
+    args.batch_size = 70
     args.base_size = 256
     args.crop_size = 256
     args.optim = "SGD"

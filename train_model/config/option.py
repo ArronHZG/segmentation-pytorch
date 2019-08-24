@@ -14,7 +14,7 @@ class Options():
                             help='backbone name (default: resnet50)')
         parser.add_argument('--dataset', type=str, default='rssrai',
                             help='dataset name (default: rssrai)')
-        parser.add_argument('--workers', type=int, default=12,
+        parser.add_argument('--workers', type=int, default=8,
                             metavar='N', help='dataloader threads')
         parser.add_argument('--base-size', type=int, default=513,
                             help='base image size')
