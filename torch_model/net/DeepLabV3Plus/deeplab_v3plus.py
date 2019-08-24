@@ -37,10 +37,11 @@ class DeepLabV3Plus(nn.Module):
     # better to have higher lr for this backbone
 
     def get_backbone_params(self):
-        return self.backbone.parameters()
+        return filter(lambda p: p.requires_grad, self.backbone.parameters())
 
-    def get_decoder_params(self):
-        return chain(self.ASSP.parameters(), self.decoder.parameters())
+    def get_other_params(self):
+        return filter(lambda p: p.requires_grad,
+                      chain(self.ASSP.parameters(), self.decoder.parameters()))
 
     def freeze_bn(self):
         for module in self.modules():
