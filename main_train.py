@@ -23,7 +23,7 @@ class Trainer():
 
         self.best_pred = 0
 
-        self.differential_lr = True
+        self.differential_lr = args.differential_lr
 
         # Define Dataloader
         self.train_loader, self.val_loader, self.test_loader, self.class_num, self.val_dataset = make_data_loader(
@@ -211,6 +211,7 @@ if __name__ == "__main__":
     args.apex = 2
     args.epochs = 500
     args.lr = 0.01
+    args.differential_lr = True
 
     print(args)
     trainer = Trainer()
