@@ -4,6 +4,7 @@ from torch.optim import SGD, Adam, ASGD
 from torch_model.blseg.model import PSPNet
 from torch_model.net.DeepLabV3Plus.deeplab_v3plus import DeepLabV3Plus
 from torch_model.net.FCN.fcn_4s import FCN
+from torch_model.net.FCN_DANet.fcn_4s import FCN as FCN_DANet
 
 
 def get_model(model_name, backbone, num_classes, in_c):
@@ -14,6 +15,8 @@ def get_model(model_name, backbone, num_classes, in_c):
         return PSPNet(backbone=backbone, num_classes=num_classes, in_c=in_c)
     if model_name == 'FCN':
         return FCN(num_classes, in_channels=in_c, backbone=backbone, pretrained=True)
+    if model_name == 'FCN-DANet':
+        return FCN_DANet(num_classes, in_channels=in_c, backbone=backbone, pretrained=True)
 
     raise NotImplementedError
 

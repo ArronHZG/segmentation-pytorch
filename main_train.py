@@ -201,12 +201,12 @@ if __name__ == "__main__":
     args = Options().parse()
 
     args.dataset = 'rssrai'
-    args.model = 'DeepLabV3Plus'
-    args.backbone = 'xception'
+    args.model = 'FCN-DANet'
+    args.backbone = 'resnet101'
     # args.check_point_id = 1
     args.batch_size = 18
-    args.base_size = 256
-    args.crop_size = 256
+    args.base_size = 512
+    args.crop_size = 512
     args.optim = "SGD"
     args.apex = 2
     args.epochs = 500
