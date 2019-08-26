@@ -1,3 +1,4 @@
+import math
 import os
 import random
 from collections import OrderedDict
@@ -66,139 +67,56 @@ color_list = np.array([[0, 200, 0],
                        [0, 0, 0]])
 
 
-class Rssrai(data.Dataset):
-    NUM_CLASSES = 16
+class RssraiTestOneImage():
+    '''
+    一次测试一张大图
 
-    def __init__(self, type='train', base_size=(512, 512), crop_size=(256, 256), base_dir=Path.db_root_dir('rssrai')):
+    使用训练集原图作为评价指标数据，验证测试方法的有效性
 
-        assert type in ['train', 'valid', 'test']
-        super().__init__()
-        self._base_dir = base_dir
-        self.type = type
+    测试时，选择多尺度滑窗，上下翻转，镜像翻转
+
+    得到每一个像素的分类置信度，对于置信度低于阈值的像素值分类采用 相近点类别投票
+
+    '''
+
+    def __init__(self, image_name, image_path, batch_size, num_workers):
+        self.image_name = image_name
+        self.image_path = image_path
+        self.batch_size = batch_size
+        self.num_workers = num_workers
         self.in_c = 4
+
         self.mean = (0.52891074, 0.38070734, 0.40119018, 0.36884733)
         self.std = (0.24007008, 0.23784, 0.22267079, 0.21865861)
-        self.crop_size = crop_size
-        self.base_size = base_size
-        self.im_ids = []
-        self.images = []
-        self.categories = []
 
-        # 加载数据
-        if self.type == 'train':
-            # train_csv = os.path.join(self._base_dir, 'train_set.csv')
-            # self._label_name_list = pd.read_csv(train_csv)["文件名"].values.tolist()
-            # print(self._label_path_list)
-            # print(self._label_name_list)
-            self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
-            self._label_dir = os.path.join(self._base_dir, 'split_train', 'label')
-            self._label_path_list = glob(os.path.join(self._label_dir, '*.tif'))
-            self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
+        self.image = None
+        self.image_vertical_flip = None
+        self.image_horizontal_flip = None
 
-            self.len = 9000
+        self._read_test_file()  # 读取图片并标准化
+        self._get_vertical_flip_image()  # 上下翻转
+        self._get_horizontal_flip_image()  # 左右翻转
 
-        if self.type == 'valid':
-            self._image_dir = os.path.join(self._base_dir, 'split_valid', 'img')
-            self._label_dir = os.path.join(self._base_dir, 'split_valid', 'label')
-            self._label_path_list = glob(os.path.join(self._label_dir, '*.tif'))
-            self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
-            # self._label_name_list = pd.read_csv( valid_csv )["文件名"].values.tolist()
+        # 每种图片使用3种不同的滑窗方式，得到3个DataSet,测试结果共同填充到一个结果矩阵
 
-            self.len = len(self._label_name_list)
-
-        if self.type == 'test':
-            self._img_path_list = glob(os.path.join(self._base_dir, 'split_test_256', 'img', '*.tif'))
-            self._img_name_list = [name.split('/')[-1] for name in self._img_path_list]
-            self._image_dir = os.path.join(self._base_dir, 'split_test_256', 'img')
-            self.len = len(self._img_path_list)
-
-    def __getitem__(self, index):
-        return self.transform(self.get_numpy_image(index))
-
-    def __len__(self):
-        return self.len
-        # return 10
-
-    def __str__(self):
-        return 'Rssrai(split=' + str(self.type) + ')'
-
-    def get_numpy_image(self, index):
-        '''
-        训练集随机选一张图片,然后随机crop
-        验证集按顺序选取
-        测试集按顺序选取
-        '''
-        sample = None
-        if self.type == 'train':
-            name = self._get_random_file_name()
-            sample = self._read_file(name)
-            sample = self._random_crop_and_enhance(sample)
-        if self.type == 'valid':
-            sample = self._read_file(self._label_name_list[index])
-            sample = self._valid_enhance(sample)
-        if self.type == 'test':
-            sample = self._read_test_file(self._img_name_list[index])
-            sample = self._test_enhance(sample)
-        # sample["image"] = sample["image"][:, :, 1:]
-        return sample
-
-    def _random_crop_and_enhance(self, sample):
-        compose = A.Compose([
-            A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
-            # A.RandomSizedCrop((512,512),self.crop_size[0], self.crop_size[1], p=1),
-            A.RandomCrop(self.crop_size[0], self.crop_size[1], p=1),
-            A.HorizontalFlip(p=0.5),
-            A.VerticalFlip(p=0.5),
-            A.RGBShift(),
-            A.Blur(),
-            A.GaussNoise(),
-            A.Normalize(mean=self.mean, std=self.std, p=1)
-        ], additional_targets={'image': 'image', 'label': 'mask'})
-        return compose(**sample)
-
-    def _valid_enhance(self, sample):
-        compose = A.Compose([
-            # A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
-            # A.CenterCrop(self.crop_size[0], self.crop_size[1], p=1),
-            A.Normalize(mean=self.mean, std=self.std, p=1)
-        ], additional_targets={'image': 'image', 'label': 'mask'})
-        return compose(**sample)
-
-    def _test_enhance(self, sample):
-        compose = A.Compose([
-            A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
-            A.CenterCrop(self.crop_size[0], self.crop_size[1], p=1),
-            A.Normalize(mean=self.mean, std=self.std, p=1)
-        ], additional_targets={'image': 'image'})
-        sample['image'] = compose(image=sample["image"])['image']
-        return sample
-
-    # @functools.lru_cache( maxsize=None )
-    def _read_file(self, label_name):
-        image_name = label_name.replace("_label", "")
-        image_pil = Image.open(os.path.join(self._image_dir, image_name))
+    def _read_test_file(self):
+        image_pil = Image.open(os.path.join(self.image_path, self.image_name))
         image_np = np.array(image_pil)
+        self.image = A.Normalize(mean=self.mean, std=self.std, p=1)(image=image_np)['image']
 
-        label_pil = Image.open(os.path.join(self._label_dir, label_name))
-        label_np = np.array(label_pil)
-        label_mask = self.encode_segmap(label_np)
+    def _get_vertical_flip_image(self):
+        self.image_vertical_flip = A.VerticalFlip(p=1)(image=self.image)['image']
 
-        return {'image': image_np, 'label': label_mask}
+    def _get_horizontal_flip_image(self):
+        self.image_vertical_flip = A.HorizontalFlip(p=1)(image=self.image)['image']
 
-    def _read_test_file(self, image_name):
-        image_pil = Image.open(os.path.join(self._image_dir, image_name))
-        image_np = np.array(image_pil)
-
-        return {'image': image_np, 'name': image_name}
-
-    def _get_random_file_name(self):
-        return random.choice(self._label_name_list)
-
-    def transform(self, sample):
-        sample['image'] = torch.from_numpy(sample['image']).permute(2, 0, 1)
-        if self.type != "test":
-            sample['label'] = torch.from_numpy(sample['label']).long()
-        return sample
+    def get_slide_dataSet(self, image):
+        for multiple in [1, 2, 4]:
+            size = 256 * multiple
+            stride = size / 2
+            yield RssraiTest(image, size, stride)
+        # test_loader = DataLoader(a, batch_size=self.batch_size, shuffle=False, pin_memory=True,
+        #                          num_workers=self.num_workers)
 
     def decode_seg_map_sequence(self, label_masks):
         rgb_masks = []
@@ -245,6 +163,52 @@ class Rssrai(data.Dataset):
         return label_mask
 
 
+class RssraiTest(data.Dataset):
+    NUM_CLASSES = 16
+
+    def __init__(self, image, crop_size, stride):
+        super(RssraiTest, self).__init__()
+        self.image = image
+        self.crop_size = crop_size
+        self.stride = stride
+        self.image_size = image.shape
+        self.w_num = math.ceil((self.image_size[0] - crop_size) / stride + 1)  # 向上取整
+        self.h_num = math.ceil((self.image_size[1] - crop_size) / stride + 1)  # 向上取整
+
+    def __len__(self):
+        return self.w_num * self.h_num
+
+    def __getitem__(self, index):
+        # w + h*w_num = index
+        h = index // self.w_num
+        w = index - h * self.w_num
+        return self.transform(self.crop_image(w, h))
+
+    def crop_image(self, w, h):
+        # print(h)
+        # print(w)
+        x1 = int(w * self.stride)
+        y1 = int(h * self.stride)
+
+        x2 = int(x1 + self.crop_size)
+        y2 = int(y1 + self.crop_size)
+
+        # 异常处理
+        if x2 > self.image_size[0] and y2 < self.image_size[1]:
+            return self.image[-self.crop_size:, y1:y2, :]
+
+        if x2 <= self.image_size[0] and y2 > self.image_size[1]:
+            return self.image[x1:x2, -self.crop_size:, :]
+
+        if x2 > self.image_size[0] and y2 > self.image_size[1]:
+            return self.image[-self.crop_size:, -self.crop_size:, :]
+
+        return self.image[x1:x2, y1:y2, :]
+
+    def transform(self, image):
+        return torch.from_numpy(image).permute(2, 0, 1)
+
+
 def testData():
     plt.rcParams['savefig.dpi'] = 500  # 图片像素
     plt.rcParams['figure.dpi'] = 500  # 分辨率
@@ -276,9 +240,9 @@ def testData():
             plt.figure()
             plt.title('display')
             plt.subplot(121)
-            plt.imshow(img_tmp,vmin=0,vmax=255)
+            plt.imshow(img_tmp, vmin=0, vmax=255)
             plt.subplot(122)
-            plt.imshow(segmap,vmin=0,vmax=255)
+            plt.imshow(segmap, vmin=0, vmax=255)
 
             # with open( f"{test_path}/rssrai-{ii}-{jj}.txt", "w" ) as f:
             #     f.write( str( img_tmp ) )
@@ -304,5 +268,24 @@ def testData():
 #         pprint( mask[0, i] )
 
 
+def testFlip():
+    base_dir = Path.db_root_dir('rssrai')
+    image_dir = os.path.join(base_dir, 'test')
+    _img_path_list = glob(os.path.join(image_dir, '*.tif'))
+    img_name_list = [name.split('/')[-1] for name in _img_path_list]
+    lenth = len(img_name_list)
+    pprint(img_name_list)
+    pprint(image_dir)
+
+    rssrai = RssraiTestOneImage(img_name_list[0], image_dir, 64, 4)
+    print(rssrai.image_vertical_flip.shape)
+    for dateSet in rssrai.get_slide_dataSet(rssrai.image):
+        print(dateSet)
+        for image in dateSet:
+            # print(image.shape)
+            pass
+        print(image.shape)
+
+
 if __name__ == '__main__':
-    testData()
+    testFlip()
