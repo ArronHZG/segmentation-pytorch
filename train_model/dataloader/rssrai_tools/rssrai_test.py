@@ -1,11 +1,10 @@
 import math
 import os
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from glob import glob
 from pprint import pprint
 
 import albumentations as A
-import matplotlib.pyplot  as plt
 import numpy as np
 import torch
 import torch.utils.data as data
@@ -78,36 +77,41 @@ class RssraiTestOneImage():
 
     '''
 
-    def __init__(self, image_name, image_path, batch_size, num_workers):
+    def __init__(self, image_name, image_path, save_path, batch_size, num_workers):
         self.image_name = image_name
         self.image_path = image_path
+        self.save_path = save_path
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.in_c = 4
+        self.num_classes = 4
 
         self.mean = (0.52891074, 0.38070734, 0.40119018, 0.36884733)
         self.std = (0.24007008, 0.23784, 0.22267079, 0.21865861)
 
-        self.image = None
-        self.image_vertical_flip = None
-        self.image_horizontal_flip = None
+        self.images = {"origin": None,
+                       "vertical": None,
+                       "horizontal": None}
+        self.images_size = None
+
+        self.output_image = None
 
         self._read_test_file()  # 读取图片并标准化
-        self._get_vertical_flip_image()  # 上下翻转
-        self._get_horizontal_flip_image()  # 左右翻转
+        self.flip_image()  # 上下翻转,左右翻转
 
         # 每种图片使用3种不同的滑窗方式，得到3个DataSet,测试结果共同填充到一个结果矩阵
 
     def _read_test_file(self):
         image_pil = Image.open(os.path.join(self.image_path, self.image_name))
         image_np = np.array(image_pil)
-        self.image = A.Normalize(mean=self.mean, std=self.std, p=1)(image=image_np)['image']
+        self.images["origin"] = A.Normalize(mean=self.mean, std=self.std, p=1)(image=image_np)['image']
+        self.images_size = self.images["origin"].shape
 
-    def _get_vertical_flip_image(self):
-        self.image_vertical_flip = A.VerticalFlip(p=1)(image=self.image)['image']
+        self.output_image = np.zeros((self.images_size[0], self.images_size[1], self.num_classes))
 
-    def _get_horizontal_flip_image(self):
-        self.image_vertical_flip = A.HorizontalFlip(p=1)(image=self.image)['image']
+    def flip_image(self):
+        self.images["vertical"] = self.vertical(self.images["origin"])
+        self.images["horizontal"] = self.horizontal(self.images["origin"])
 
     def get_slide_dataSet(self, image):
         for multiple in [1, 2, 4]:
@@ -163,6 +167,38 @@ class RssraiTestOneImage():
         label_mask = label_mask.astype(int)
         return label_mask
 
+    def fill_image(self, type, sample):
+        sample['image'] = sample['image'].permute(0, 2, 3, 1).cpu().numpy()
+        if 'vertical' == type:
+            sample['image'] = self.vertical(sample['image'])
+        if 'horizontal' == type:
+            sample['image'] = self.horizontal(sample['image'])
+        self._fill(sample)
+
+    def _fill(self, sample):
+        l = len(sample["x1"])
+        for i in range(l):
+            # print(self.output_image[sample["x1"][i]:sample["x2"][i], sample["y1"][i]:sample["y2"][i], :].shape)
+            # print(sample['image'][i].permute(1,2,0).shape)
+            self.output_image[sample["x1"][i]:sample["x2"][i], sample["y1"][i]:sample["y2"][i], :] = \
+                sample['image'][i]
+
+    def vertical(self, image):
+        return A.VerticalFlip(p=1)(image=image)['image']
+
+    def horizontal(self, image):
+        return A.HorizontalFlip(p=1)(image=image)['image']
+
+    def saveResultRGBImage(self):
+        # output (B,C,H,W) to (B,H,W)
+        # print(output.size())
+        image = np.argmax(self.output_image, axis=2)
+        image = self.decode_segmap(image)
+        image = Image.fromarray(image.astype('uint8'))
+        image.save(os.path.join(self.save_path, f"{self.image_name[:-4]}_label.tif"))
+
+
+
 
 class RssraiTest(data.Dataset):
     NUM_CLASSES = 16
@@ -216,83 +252,38 @@ class RssraiTest(data.Dataset):
         return sample
 
 
-def testData():
-    plt.rcParams['savefig.dpi'] = 500  # 图片像素
-    plt.rcParams['figure.dpi'] = 500  # 分辨率
-
-    test_path = os.path.join(Path().db_root_dir("rssrai"), "测试输出")
-    if not os.path.exists(test_path):
-        os.makedirs(test_path)
-
-    rssrai = Rssrai(type="train")
-    for i in rssrai:
-        pprint(i["image"].shape)
-        pprint(i["label"].shape)
-        break
-    data_loader = DataLoader(rssrai, batch_size=4, shuffle=True, num_workers=4)
-
-    for ii, sample in enumerate(data_loader):
-        print(sample['image'].shape)
-        sample['image'] = sample['image'][:, 1:, :, :]
-        for jj in range(sample["image"].size()[0]):
-            img = sample['image'].numpy()
-            gt = sample['label'].numpy()
-            img_tmp = np.transpose(img[jj], axes=[1, 2, 0])
-            tmp = gt[jj]
-            segmap = rssrai.decode_segmap(tmp).astype(np.uint8)
-            img_tmp *= rssrai.std[1:]
-            img_tmp += rssrai.mean[1:]
-            img_tmp *= 255.0
-            img_tmp = img_tmp.astype(np.uint8)
-            plt.figure()
-            plt.title('display')
-            plt.subplot(121)
-            plt.imshow(img_tmp, vmin=0, vmax=255)
-            plt.subplot(122)
-            plt.imshow(segmap, vmin=0, vmax=255)
-
-            # with open( f"{test_path}/rssrai-{ii}-{jj}.txt", "w" ) as f:
-            #     f.write( str( img_tmp ) )
-            #     f.write( str( tmp ) )
-            #     f.write( str( segmap ) )
-            plt.savefig(f"{test_path}/rssrai-{ii}-{jj}.jpg")
-            plt.close('all')
-
-        if ii == 3:
-            break
-
-    plt.show(block=True)
-
-
-# def test_encode():
-#     from PIL import Image
-#     image = Image.open(
-#         '/home/arron/Documents/grey/Project_Rssrai/rssrai/split_valid/label/GF2_PMS1__20150212_L1A0000647768-MSS1_label_0_0_0_0.tif' )
-#     image = np.array( image )
-#     mask = encode_segmap( image )
-#     for i in range( image.shape[1] ):
-#         pprint( image[0, i] )
-#         pprint( mask[0, i] )
 def printSample(sample):
     print(f"CropSample:\nx1={sample['x1']}\nx2={sample['x2']}\ny1={sample['y1']}\ny2={sample['y2']}" \
           + f"\nimage.shape={sample['image'].shape}")
 
 
+def save_path(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
+
+
 def testFlip():
     base_dir = Path.db_root_dir('rssrai')
     image_dir = os.path.join(base_dir, 'test')
+    save_dir = save_path(os.path.join(base_dir, 'test_output'))
+
     _img_path_list = glob(os.path.join(image_dir, '*.tif'))
     img_name_list = [name.split('/')[-1] for name in _img_path_list]
-    lenth = len(img_name_list)
     pprint(img_name_list)
     pprint(image_dir)
 
-    rssrai = RssraiTestOneImage(img_name_list[0], image_dir, 64, 4)
-    print(rssrai.image_vertical_flip.shape)
-    for dateSet in rssrai.get_slide_dataSet(rssrai.image):
+    rssraiImage = RssraiTestOneImage(img_name_list[0], image_dir, save_dir, 64, 4)
+
+    type = "origin"
+    type = "vertical"
+    type = "horizontal"
+    print(rssraiImage.images[type].shape)
+    for dateSet in rssraiImage.get_slide_dataSet(rssraiImage.images[type]):
         print(dateSet)
         for i in dateSet:
-            printSample(i)
+            rssraiImage.fill_image(type, i)
+    rssraiImage.saveResultRGBImage()
 
 
 if __name__ == '__main__':
