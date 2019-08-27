@@ -5,6 +5,7 @@ from glob import glob
 from pprint import pprint
 
 import albumentations as A
+import gc
 import numpy as np
 import torch
 import torch.utils.data as data
@@ -84,7 +85,7 @@ class RssraiTestOneImage():
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.in_c = 4
-        self.num_classes = 4
+        self.num_classes = 21
 
         self.mean = (0.52891074, 0.38070734, 0.40119018, 0.36884733)
         self.std = (0.24007008, 0.23784, 0.22267079, 0.21865861)
@@ -93,7 +94,6 @@ class RssraiTestOneImage():
                        "vertical": None,
                        "horizontal": None}
         self.images_size = None
-
         self.output_image = None
 
         self._read_test_file()  # 读取图片并标准化
@@ -168,11 +168,13 @@ class RssraiTestOneImage():
         return label_mask
 
     def fill_image(self, type, sample):
-        sample['image'] = sample['image'].permute(0, 2, 3, 1).cpu().numpy()
+        temp = sample['image'].permute(0, 2, 3, 1).cpu().numpy()
         if 'vertical' == type:
-            sample['image'] = self.vertical(sample['image'])
+            sample['image'] = self.vertical(temp)
         if 'horizontal' == type:
-            sample['image'] = self.horizontal(sample['image'])
+            sample['image'] = self.horizontal(temp)
+        if 'origin' == type:
+            sample['image'] = temp
         self._fill(sample)
 
     def _fill(self, sample):
@@ -182,6 +184,7 @@ class RssraiTestOneImage():
             # print(sample['image'][i].permute(1,2,0).shape)
             self.output_image[sample["x1"][i]:sample["x2"][i], sample["y1"][i]:sample["y2"][i], :] = \
                 sample['image'][i]
+        del sample
 
     def vertical(self, image):
         return A.VerticalFlip(p=1)(image=image)['image']
@@ -196,8 +199,6 @@ class RssraiTestOneImage():
         image = self.decode_segmap(image)
         image = Image.fromarray(image.astype('uint8'))
         image.save(os.path.join(self.save_path, f"{self.image_name[:-4]}_label.tif"))
-
-
 
 
 class RssraiTest(data.Dataset):
@@ -273,16 +274,20 @@ def testFlip():
     pprint(img_name_list)
     pprint(image_dir)
 
-    rssraiImage = RssraiTestOneImage(img_name_list[0], image_dir, save_dir, 64, 4)
+    rssraiImage = RssraiTestOneImage(img_name_list[0], image_dir, save_dir, 10, 4)
 
     type = "origin"
-    type = "vertical"
-    type = "horizontal"
+    # type = "vertical"
+    # type = "horizontal"
     print(rssraiImage.images[type].shape)
     for dateSet in rssraiImage.get_slide_dataSet(rssraiImage.images[type]):
         print(dateSet)
         for i in dateSet:
-            rssraiImage.fill_image(type, i)
+            shape = i['image'].shape
+            print(shape)
+            # i['image'] = torch.zeros(shape[0], rssraiImage.num_classes, shape[2], shape[3]).cuda()
+            # rssraiImage.fill_image(type, i)
+
     rssraiImage.saveResultRGBImage()
 
 
