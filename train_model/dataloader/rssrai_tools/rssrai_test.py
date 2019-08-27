@@ -1,7 +1,6 @@
 import math
 import os
-import random
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from glob import glob
 from pprint import pprint
 
@@ -114,9 +113,11 @@ class RssraiTestOneImage():
         for multiple in [1, 2, 4]:
             size = 256 * multiple
             stride = size / 2
-            yield RssraiTest(image, size, stride)
-        # test_loader = DataLoader(a, batch_size=self.batch_size, shuffle=False, pin_memory=True,
-        #                          num_workers=self.num_workers)
+            rssraiSet = RssraiTest(image, size, stride)
+            yield DataLoader(rssraiSet, batch_size=self.batch_size,
+                             shuffle=False,
+                             pin_memory=True,
+                             num_workers=self.num_workers)
 
     def decode_seg_map_sequence(self, label_masks):
         rgb_masks = []
@@ -195,18 +196,24 @@ class RssraiTest(data.Dataset):
 
         # 异常处理
         if x2 > self.image_size[0] and y2 < self.image_size[1]:
-            return self.image[-self.crop_size:, y1:y2, :]
+            x1 = self.image_size[0] - self.crop_size
+            x2 = self.image_size[0]
 
         if x2 <= self.image_size[0] and y2 > self.image_size[1]:
-            return self.image[x1:x2, -self.crop_size:, :]
+            y1 = self.image_size[1] - self.crop_size
+            y2 = self.image_size[1]
 
         if x2 > self.image_size[0] and y2 > self.image_size[1]:
-            return self.image[-self.crop_size:, -self.crop_size:, :]
+            x1 = self.image_size[0] - self.crop_size
+            x2 = self.image_size[0]
+            y1 = self.image_size[1] - self.crop_size
+            y2 = self.image_size[1]
 
-        return self.image[x1:x2, y1:y2, :]
+        return {"x1": x1, "x2": x2, "y1": y1, "y2": y2, "image": self.image[x1:x2, y1:y2, :]}
 
-    def transform(self, image):
-        return torch.from_numpy(image).permute(2, 0, 1)
+    def transform(self, sample):
+        sample["image"] = torch.from_numpy(sample["image"]).permute(2, 0, 1)
+        return sample
 
 
 def testData():
@@ -266,6 +273,9 @@ def testData():
 #     for i in range( image.shape[1] ):
 #         pprint( image[0, i] )
 #         pprint( mask[0, i] )
+def printSample(sample):
+    print(f"CropSample:\nx1={sample['x1']}\nx2={sample['x2']}\ny1={sample['y1']}\ny2={sample['y2']}" \
+          + f"\nimage.shape={sample['image'].shape}")
 
 
 def testFlip():
@@ -281,10 +291,8 @@ def testFlip():
     print(rssrai.image_vertical_flip.shape)
     for dateSet in rssrai.get_slide_dataSet(rssrai.image):
         print(dateSet)
-        for image in dateSet:
-            # print(image.shape)
-            pass
-        print(image.shape)
+        for i in dateSet:
+            printSample(i)
 
 
 if __name__ == '__main__':
