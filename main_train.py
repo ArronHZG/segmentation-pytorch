@@ -1,7 +1,6 @@
 from collections import namedtuple
 
 import torch
-from apex import amp
 from tqdm import tqdm
 
 from torch_model import get_model, get_optimizer
@@ -22,8 +21,6 @@ class Trainer():
         self.epochs = self.args.epochs
 
         self.best_pred = 0
-
-        self.differential_lr = args.differential_lr
 
         # Define Dataloader
         self.train_loader, self.val_loader, self.test_loader, self.class_num, self.val_dataset = make_data_loader(
@@ -47,37 +44,27 @@ class Trainer():
                                num_classes=self.class_num,
                                in_c=self.val_dataset.in_c)
 
-        if self.differential_lr:
-            if isinstance(self.model, torch.nn.DataParallel):
-                self.parameters = [
-                    {'params': self.model.module.get_other_params(), 'lr': args.lr},
-                    {'params': self.model.module.get_backbone_params(), 'lr': args.lr / 10}]
-            else:
-                self.parameters = [
-                    {'params': self.model.get_decoder_params(), 'lr': args.lr},
-                    {'params': self.model.get_backbone_params(), 'lr': args.lr / 10}]
-        else:
-            self.parameters = self.model.parameters()
-
-        self.optimizer = get_optimizer(optim_name=self.args.optim, parameters=self.parameters,
+        self.optimizer = get_optimizer(optim_name=self.args.optim, parameters=self.model.parameters(),
                                        lr=self.args.lr)
 
         if self.args.check_point_id != None:
             self.best_pred, self.start_epoch, model_state_dict, optimizer_state_dict = self.saver.load_checkpoint()
             self.model.load_state_dict(model_state_dict)
-            self.optimizer.load_state_dict(optimizer_state_dict)
+            if not args.reset_lr:
+                self.optimizer.load_state_dict(optimizer_state_dict)
 
         # self.criterion = loss.CrossEntropyLossWithOHEM( 0.7 )
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=255)
 
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'max',
-                                                                    factor=0.8,
-                                                                    patience=10,
+                                                                    factor=0.9,
+                                                                    patience=3,
                                                                     verbose=True)
         if self.args.cuda:
             self.model = self.model.cuda()
             self.criterion.cuda()
         if self.args.apex:
+            from apex import amp
             self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level=f"O{args.apex}")
 
         self.Metric = namedtuple('Metric', 'pixacc miou kappa')
@@ -116,6 +103,7 @@ class Trainer():
             self.train_metric.pixacc.update(output, target)
 
             if self.args.apex:
+                from apex import amp
                 with amp.scale_loss(loss, self.optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
@@ -201,17 +189,18 @@ if __name__ == "__main__":
     args = Options().parse()
 
     args.dataset = 'rssrai'
-    args.model = 'FCN-DANet'
-    args.backbone = 'resnet101'
-    # args.check_point_id = 1
-    args.batch_size = 18
-    args.base_size = 512
-    args.crop_size = 512
+    args.model = 'FCN'
+    args.backbone = 'resnet50'
+    args.check_point_id = 1
+    args.batch_size = 70
+    args.base_size = 256
+    args.crop_size = 256
     args.optim = "SGD"
     args.apex = 2
-    args.epochs = 500
+    args.epochs = 1000
     args.lr = 0.01
-    args.differential_lr = True
+
+    args.reset_lr = True
 
     print(args)
     trainer = Trainer()

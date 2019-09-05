@@ -6,7 +6,7 @@ from .resnet import ResNet
 def getBackBone(name, in_channels, pretrained):
     model_map = {
         'resnet50': fcnResNet50,
-        'resnet101': fcnResNet50,
+        'resnet101': fcnResNet101,
     }
 
     return model_map[name](in_channels, pretrained)

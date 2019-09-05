@@ -1,5 +1,6 @@
 import math
 import os
+import time
 from collections import OrderedDict
 from glob import glob
 from pprint import pprint
@@ -69,13 +70,9 @@ color_list = np.array([[0, 200, 0],
 class RssraiTestOneImage():
     '''
     一次测试一张大图
-
     使用训练集原图作为评价指标数据，验证测试方法的有效性
-
     测试时，选择多尺度滑窗，上下翻转，镜像翻转
-
     得到每一个像素的分类置信度，对于置信度低于阈值的像素值分类采用 相近点类别投票
-
     '''
 
     def __init__(self, image_name, image_path, save_path, batch_size, num_workers):
@@ -85,7 +82,7 @@ class RssraiTestOneImage():
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.in_c = 4
-        self.num_classes = 21
+        self.num_classes = 16
 
         self.mean = (0.52891074, 0.38070734, 0.40119018, 0.36884733)
         self.std = (0.24007008, 0.23784, 0.22267079, 0.21865861)
@@ -114,9 +111,10 @@ class RssraiTestOneImage():
         self.images["horizontal"] = self.horizontal(self.images["origin"])
 
     def get_slide_dataSet(self, image):
-        for multiple in [1, 2, 4]:
+        for multiple in [1]:
             size = 256 * multiple
-            stride = size / 2
+            stride = size / 4
+            # stride = size
             rssraiSet = RssraiTest(image, size, stride)
             yield DataLoader(rssraiSet, batch_size=self.batch_size,
                              shuffle=False,
@@ -168,13 +166,16 @@ class RssraiTestOneImage():
         return label_mask
 
     def fill_image(self, type, sample):
-        temp = sample['image'].permute(0, 2, 3, 1).cpu().numpy()
+        temp = sample['image']
+        image = temp.permute(0, 2, 3, 1).cpu().numpy()
+        del temp
+        gc.collect()
         if 'vertical' == type:
-            sample['image'] = self.vertical(temp)
+            sample['image'] = self.vertical(image)
         if 'horizontal' == type:
-            sample['image'] = self.horizontal(temp)
+            sample['image'] = self.horizontal(image)
         if 'origin' == type:
-            sample['image'] = temp
+            sample['image'] = image
         self._fill(sample)
 
     def _fill(self, sample):
@@ -184,7 +185,13 @@ class RssraiTestOneImage():
             # print(sample['image'][i].permute(1,2,0).shape)
             self.output_image[sample["x1"][i]:sample["x2"][i], sample["y1"][i]:sample["y2"][i], :] = \
                 sample['image'][i]
-        del sample
+        del sample["x1"]
+        del sample["x2"]
+        del sample["y1"]
+        del sample["y2"]
+        del sample["image"]
+        gc.collect()
+        # time.sleep(3)
 
     def vertical(self, image):
         return A.VerticalFlip(p=1)(image=image)['image']

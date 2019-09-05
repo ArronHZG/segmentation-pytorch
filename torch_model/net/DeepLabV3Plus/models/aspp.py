@@ -13,20 +13,6 @@ def assp_branch(in_channels, out_channles, kernel_size, dilation):
         nn.ReLU(inplace=True))
 
 
-class ImagePooling(nn.Module):
-    def __init__(self, in_channels):
-        super(ImagePooling, self).__init__()
-
-        self.avg_pool = nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Conv2d(in_channels, 256, 1, bias=False),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True))
-
-    def forward(self, x):
-        return F.interpolate(self.avg_pool(x), size=(x.size(2), x.size(3)), mode='bilinear', align_corners=True)
-
-
 class ASSP(nn.Module):
     def __init__(self, in_channels, output_stride):
         super(ASSP, self).__init__()
@@ -42,7 +28,12 @@ class ASSP(nn.Module):
         self.aspp2 = assp_branch(in_channels, 256, 3, dilation=dilations[1])
         self.aspp3 = assp_branch(in_channels, 256, 3, dilation=dilations[2])
         self.aspp4 = assp_branch(in_channels, 256, 3, dilation=dilations[3])
-        self.aspp5 = ImagePooling(in_channels)
+
+        self.avg_pool = nn.Sequential(
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Conv2d(in_channels, 256, 1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True))
 
         self.conv1 = nn.Conv2d(256 * 5, 256, 1, bias=False)
         self.bn1 = nn.BatchNorm2d(256)
@@ -56,7 +47,7 @@ class ASSP(nn.Module):
         x2 = self.aspp2(x)
         x3 = self.aspp3(x)
         x4 = self.aspp4(x)
-        x5 = self.aspp5(x)
+        x5 = F.interpolate(self.avg_pool(x), size=(x.size(2), x.size(3)), mode='bilinear', align_corners=True)
 
         x = self.conv1(torch.cat((x1, x2, x3, x4, x5), dim=1))
         x = self.bn1(x)

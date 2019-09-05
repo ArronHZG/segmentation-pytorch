@@ -17,7 +17,7 @@ class DeepLabV3Plus(nn.Module):
         self.backbone, low_level_channels = getBackBone(backbone, in_channels=in_channels, output_stride=output_stride,
                                                         pretrained=pretrained)
 
-        self.assp = ASSP(in_channels=2048, output_stride=output_stride)
+        self.ASSP = ASSP(in_channels=2048, output_stride=output_stride)
 
         self.decoder = Decoder(low_level_channels, num_classes)
 
@@ -27,8 +27,9 @@ class DeepLabV3Plus(nn.Module):
     def forward(self, x):
         H, W = x.size(2), x.size(3)
         x, low_level_features = self.backbone(x)
-        x = self.assp(x)
-        x = self.decoder(x, low_level_features, H, W)
+        x = self.ASSP(x)
+        x = self.decoder(x, low_level_features)
+        x = F.interpolate(x, size=(H, W), mode='bilinear', align_corners=True)
         return x
 
     # Two functions to yield the parameters of the backbone
@@ -37,11 +38,10 @@ class DeepLabV3Plus(nn.Module):
     # better to have higher lr for this backbone
 
     def get_backbone_params(self):
-        return filter(lambda p: p.requires_grad, self.backbone.parameters())
+        return self.backbone.parameters()
 
-    def get_other_params(self):
-        return filter(lambda p: p.requires_grad,
-                      chain(self.ASSP.parameters(), self.decoder.parameters()))
+    def get_decoder_params(self):
+        return chain(self.ASSP.parameters(), self.decoder.parameters())
 
     def freeze_bn(self):
         for module in self.modules():
@@ -49,7 +49,7 @@ class DeepLabV3Plus(nn.Module):
 
 
 if __name__ == '__main__':
-    m, _ = getBackBone("xception", 3, output_stride=8, pretrained=False)
+    m,_ = getBackBone("xception", output_stride=8, pretrained=False)
     print(m)
     x = torch.rand((1, 3, 256, 256))
     print(x.shape)

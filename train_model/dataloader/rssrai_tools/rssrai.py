@@ -88,20 +88,20 @@ class Rssrai(data.Dataset):
         if self.type == 'train':
             # train_csv = os.path.join(self._base_dir, 'train_set.csv')
             # self._label_name_list = pd.read_csv(train_csv)["文件名"].values.tolist()
+            self._label_path_list = glob(os.path.join(self._base_dir, 'split_train', 'label', '*.tif'))
             # print(self._label_path_list)
+            self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
             # print(self._label_name_list)
             self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
             self._label_dir = os.path.join(self._base_dir, 'split_train', 'label')
-            self._label_path_list = glob(os.path.join(self._label_dir, '*.tif'))
-            self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
 
-            self.len = 9000
+            self.len = 14000
 
         if self.type == 'valid':
-            self._image_dir = os.path.join(self._base_dir, 'split_valid', 'img')
-            self._label_dir = os.path.join(self._base_dir, 'split_valid', 'label')
-            self._label_path_list = glob(os.path.join(self._label_dir, '*.tif'))
+            self._label_path_list = glob(os.path.join(self._base_dir, 'split_valid_256', 'label', '*.tif'))
             self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
+            self._image_dir = os.path.join(self._base_dir, 'split_valid_256', 'img')
+            self._label_dir = os.path.join(self._base_dir, 'split_valid_256', 'label')
             # self._label_name_list = pd.read_csv( valid_csv )["文件名"].values.tolist()
 
             self.len = len(self._label_name_list)
@@ -158,8 +158,8 @@ class Rssrai(data.Dataset):
 
     def _valid_enhance(self, sample):
         compose = A.Compose([
-            # A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
-            # A.CenterCrop(self.crop_size[0], self.crop_size[1], p=1),
+            A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
+            A.CenterCrop(self.crop_size[0], self.crop_size[1], p=1),
             A.Normalize(mean=self.mean, std=self.std, p=1)
         ], additional_targets={'image': 'image', 'label': 'mask'})
         return compose(**sample)
@@ -268,7 +268,7 @@ def testData():
             gt = sample['label'].numpy()
             img_tmp = np.transpose(img[jj], axes=[1, 2, 0])
             tmp = gt[jj]
-            segmap = rssrai.decode_segmap(tmp).astype(np.uint8)
+            segmap = rssrai.decode_segmap(tmp)
             img_tmp *= rssrai.std[1:]
             img_tmp += rssrai.mean[1:]
             img_tmp *= 255.0
@@ -276,10 +276,9 @@ def testData():
             plt.figure()
             plt.title('display')
             plt.subplot(121)
-            plt.imshow(img_tmp,vmin=0,vmax=255)
+            plt.imshow(img_tmp)
             plt.subplot(122)
-            plt.imshow(segmap,vmin=0,vmax=255)
-
+            plt.imshow(segmap)
             # with open( f"{test_path}/rssrai-{ii}-{jj}.txt", "w" ) as f:
             #     f.write( str( img_tmp ) )
             #     f.write( str( tmp ) )

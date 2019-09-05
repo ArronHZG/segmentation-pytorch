@@ -15,6 +15,10 @@ class Decoder(nn.Module):
             nn.ReLU(inplace=True),
         )
 
+        # self.conv1 = nn.Conv2d(low_level_channels, 48, 1, bias=False)
+        # self.bn1 = nn.BatchNorm2d(48)
+        # self.relu = nn.LeakyReLU(inplace=True)
+
         # Table 2, best performance with two 3x3 convs
         self.output = nn.Sequential(
             nn.Conv2d(48 + 256, 256, 3, stride=1, padding=1, bias=False),
@@ -28,18 +32,16 @@ class Decoder(nn.Module):
         )
         initialize_weights(self)
 
-    def forward(self, x, low_level_features, H, W):
-        # low_level_features 变为 channel = 48
+    def forward(self, x, low_level_features):
+        # channel = 48
         low_level_features = self.low_level_conv(low_level_features)
-        # 上采用2/4倍
-        x = F.interpolate(x, size=(low_level_features.size(2), low_level_features.size(3)),
-                          mode='bilinear',
-                          align_corners=True)
-        # concat
-        x = torch.cat((x, low_level_features), dim=1)
-        # 得到结果卷积
-        x = self.output(x)
-        # 上采用4倍 恢复到原图大小
+
+        H, W = low_level_features.size(2), low_level_features.size(3)
+
         x = F.interpolate(x, size=(H, W), mode='bilinear', align_corners=True)
+
+        x = torch.cat((x, low_level_features), dim=1)
+
+        x = self.output(x)
 
         return x

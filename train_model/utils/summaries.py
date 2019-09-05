@@ -53,13 +53,13 @@ class TensorboardSummary():
             plt.figure()
             plt.title('display')
             plt.subplot(131)
-            plt.imshow(img_rgb_tmp,vmin=0,vmax=255)
+            plt.imshow(img_rgb_tmp, vmin=0, vmax=255)
             plt.subplot(132)
-            plt.imshow(target_rgb_tmp,vmin=0,vmax=255)
+            plt.imshow(target_rgb_tmp, vmin=0, vmax=255)
             plt.subplot(133)
-            plt.imshow(output_rgb_tmp,vmin=0,vmax=255)
+            plt.imshow(output_rgb_tmp, vmin=0, vmax=255)
 
-            path = os.path.join(self.directory,"train_image",f'epoch_{epoch}')
+            path = os.path.join(self.directory, "train_image", f'epoch_{epoch}')
             if not os.path.exists(path):
                 os.makedirs(path)
             plt.savefig(f"{path}/{batch_index}-{i}.jpg")

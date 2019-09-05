@@ -1,91 +1,94 @@
+import gc
 import os
+from glob import glob
+from pprint import pprint
 
 import torch
-from apex import amp
 from tqdm import tqdm
 
-from torch_model import get_model, get_optimizer
+from torch_model import get_model
+from train_model.config.mypath import Path
 from train_model.config.option import Options
-from train_model.dataloader.rssrai_tools.split_rssrai import merge_rssrai_test_label_images
-from train_model.dataloader.utils import make_data_loader
+from train_model.dataloader.rssrai_tools.rssrai_test import save_path, RssraiTestOneImage
 from train_model.utils.saver import Saver
-from train_model.utils.summaries import TensorboardSummary
 
 
-class Tester():
+class Tester:
 
     def __init__(self):
         self.args = args
 
-        # Define Dataloader
-        _, _, self.test_loader, self.class_num, self.val_dataset = make_data_loader(
-            dataset_name=self.args.dataset,
-            base_size=(self.args.base_size, self.args.base_size),
-            crop_size=(self.args.crop_size, self.args.crop_size),
-            batch_size=self.args.batch_size,
-            num_workers=self.args.workers
-        )
-
-        # Define Saver
         self.saver = Saver(args)
 
-        # Define Tensorboard Summary
-        self.summary = TensorboardSummary(self.saver.experiment_dir, self.val_dataset)
+    def test(self, image_name, image_dir, save_dir):
+        rssraiImage = RssraiTestOneImage(image_name, image_dir, save_dir, self.args.batch_size, self.args.workers)
 
         # Define network
         self.model = get_model(model_name=self.args.model,
                                backbone=self.args.backbone,
-                               num_classes=self.class_num,
-                               in_c=self.val_dataset.in_c)
-
-        self.optimizer = get_optimizer(optim_name=self.args.optim, parameters=self.model.parameters(),
-                                       lr=self.args.lr)
+                               num_classes=rssraiImage.num_classes,
+                               in_c=rssraiImage.in_c)
 
         if self.args.check_point_id != None:
             self.best_pred, self.start_epoch, model_state_dict, optimizer_state_dict = self.saver.load_checkpoint()
             self.model.load_state_dict(model_state_dict)
+            del self.best_pred
+            del self.start_epoch
+            del optimizer_state_dict
+            gc.collect()
+        else:
+            raise ModuleNotFoundError("can not find model file")
 
         if self.args.cuda:
             self.model = self.model.cuda()
 
-        if self.args.apex:
-            self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level=f"O{args.apex}")
-
-    def test(self):
         self.model.eval()
 
-        tbar = tqdm(self.test_loader)
-        print(len(tbar))
-        for i, sample in enumerate(tbar):
-            image = sample['image']
-            if self.args.cuda:
-                image = image.cuda()
-            with torch.no_grad():
-                output = self.model(image)
-            self.summary.save_test_image(sample['name'], output)
-            # break
+        typeList = ["origin", "vertical", "horizontal"]
+        typeList = ["origin"]
+        for type in typeList:
+            for dateLoader in rssraiImage.get_slide_dataSet(rssraiImage.images[type]):
+                tbar = tqdm(dateLoader)
+                for i, sample in enumerate(tbar):
+                    image = sample['image']
+                    if self.args.cuda:
+                        image = image.cuda()
+                    with torch.no_grad():
+                        sample['image'] = self.model(image)
+                    rssraiImage.fill_image(type, sample)
+                    del image
+                    gc.collect()
+                del tbar
+                del dateLoader
+                gc.collect()
+            del rssraiImage.images[type]
+            gc.collect()
+        rssraiImage.saveResultRGBImage()
 
-        self.summary.merge()
+        del rssraiImage
+        del self.model
+        gc.collect()
 
 
 if __name__ == "__main__":
-    # torch.backends.cudnn.deterministic = True
-    # torch.backends.cudnn.benchmark = False
-
     args = Options().parse()
 
     args.dataset = 'rssrai'
-    args.model = 'DeepLabV3Plus'
-    args.backbone = 'selu_se_resnet50'
-    args.check_point_id = 17
-    args.batch_size = 32
-    args.base_size = 256
-    args.crop_size = 256
-    args.optim = "Adam"
-    args.apex = 2
-    args.epochs=300
-    # args.lr=0.01
+    args.model = 'FCN'
+    args.backbone = 'resnet50'
+    args.check_point_id = 1
+    args.batch_size = 200
 
     print(args)
     tester = Tester()
-    tester.test()
+
+    base_dir = Path.db_root_dir('rssrai')
+    image_dir = os.path.join(base_dir, 'test')
+    save_dir = save_path(os.path.join(base_dir, 'test_output'))
+
+    _img_path_list = glob(os.path.join(image_dir, '*.tif'))
+    img_name_list = [name.split('/')[-1] for name in _img_path_list]
+    pprint(img_name_list)
+    for index, name in enumerate(img_name_list):
+        print(f"{index}:{name}")
+        tester.test(name, image_dir, save_dir)
