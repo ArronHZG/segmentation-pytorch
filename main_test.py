@@ -1,5 +1,6 @@
 import gc
 import os
+import time
 from glob import glob
 from pprint import pprint
 
@@ -77,14 +78,16 @@ if __name__ == "__main__":
     args.model = 'FCN'
     args.backbone = 'resnet50'
     args.check_point_id = 1
-    args.batch_size = 200
+    args.batch_size = 500
 
     print(args)
+    now = f"{time.localtime(time.time()).tm_year}-{time.localtime(time.time()).tm_mon}-{time.localtime(time.time()).tm_mday}-"
+    now += f"{time.localtime(time.time()).tm_hour}-{time.localtime(time.time()).tm_min}-{time.localtime(time.time()).tm_sec}"
     tester = Tester()
 
     base_dir = Path.db_root_dir('rssrai')
-    image_dir = os.path.join(base_dir, 'test')
-    save_dir = save_path(os.path.join(base_dir, 'test_output'))
+    image_dir = os.path.join(base_dir, 'train', 'img')
+    save_dir = save_path(os.path.join(base_dir, f'test_output_model={args.model}_time={now}'))
 
     _img_path_list = glob(os.path.join(image_dir, '*.tif'))
     img_name_list = [name.split('/')[-1] for name in _img_path_list]
