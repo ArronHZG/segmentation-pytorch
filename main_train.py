@@ -11,7 +11,7 @@ from train_model.utils.saver import Saver
 from train_model.utils.summaries import TensorboardSummary
 
 
-class Trainer():
+class Trainer:
 
     def __init__(self):
         self.args = args
@@ -47,7 +47,7 @@ class Trainer():
         self.optimizer = get_optimizer(optim_name=self.args.optim, parameters=self.model.parameters(),
                                        lr=self.args.lr)
 
-        if self.args.check_point_id != None:
+        if self.args.check_point_id is not None:
             self.best_pred, self.start_epoch, model_state_dict, optimizer_state_dict = self.saver.load_checkpoint()
             self.model.load_state_dict(model_state_dict)
             if not args.reset_lr:
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     args.dataset = 'rssrai'
     args.model = 'FCN'
     args.backbone = 'resnet50'
-    args.check_point_id = 1
+    # args.check_point_id = 2
     args.batch_size = 70
     args.base_size = 256
     args.crop_size = 256
@@ -199,6 +199,7 @@ if __name__ == "__main__":
     args.apex = 2
     args.epochs = 1000
     args.lr = 0.01
+    args.workers = 12
 
     args.reset_lr = True
 
