@@ -13,7 +13,7 @@ class Saver():
     def __init__(self, args):
         self.args = args
         self.directory = os.path.join('run', args.dataset, args.model + "-" + args.backbone)
-        if self.args.check_point_id == None:
+        if None is not self.args.check_point_id:
             self.runs = glob.glob(os.path.join(self.directory, 'experiment_*'))
             run_ids = sorted([int(experiment.split('_')[-1]) for experiment in self.runs]) if self.runs else [0]
             run_id = run_ids[-1] + 1
@@ -29,9 +29,9 @@ class Saver():
 
     def save_checkpoint(self, state, is_best, metric, filename='checkpoint.pth'):
         """Saves checkpoint to disk"""
-
+        metric
         with open(os.path.join(self.experiment_dir, 'best_pred.txt'), 'a+') as f:
-            f.write(f"[epoch {str(state['epoch'])}] {metric}\n")
+            f.write(f"[epoch {str(state['epoch']).zfill(3)}] {metric}\n")
         if is_best:
             filename = os.path.join(self.experiment_dir, filename)
             torch.save(state, filename)

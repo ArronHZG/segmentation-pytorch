@@ -155,15 +155,17 @@ class Trainer:
 
         new_pred = self.valid_metric.miou.get()
         test_loss /= num_img_tr
-        metric_str = f"Acc:{self.valid_metric.pixacc.get()}, mIoU:{new_pred}, kappa: {self.valid_metric.kappa.get()}"
+        metric_str = "Acc:{:.4f}, mIoU:{:.4f}, kappa: {:.4f}".format(self.valid_metric.pixacc.get(), new_pred,
+                                                                     self.valid_metric.kappa.get())
         self.summary.writer.add_scalars('metric/loss_epoch', {"valid": test_loss}, epoch)
         self.summary.writer.add_scalars('metric/mIoU', {"valid": new_pred}, epoch)
         self.summary.writer.add_scalars('metric/Acc', {"valid": self.valid_metric.pixacc.get()}, epoch)
         self.summary.writer.add_scalars('metric/kappa', {"valid": self.valid_metric.kappa.get()}, epoch)
         print('Validation:')
-        print('[Epoch: %d, numImages: %5d]' % (epoch, num_img_tr * self.args.batch_size))
+        print(f"[Epoch: {epoch}, numImages: {num_img_tr * self.args.batch_size}]")
+
         print(metric_str)
-        print('Loss: %.3f' % test_loss)
+        print(f'Loss: {test_loss:.4f}')
 
         is_best = False
 

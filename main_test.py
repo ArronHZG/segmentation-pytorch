@@ -18,8 +18,10 @@ class Tester:
 
     def __init__(self):
         self.args = args
-
         self.saver = Saver(args)
+        self.best_pred = 0
+        self.start_epoch = 0
+        self.model = None
 
     def test(self, image_name, image_dir, save_dir):
         rssraiImage = RssraiTestOneImage(image_name, image_dir, save_dir, self.args.batch_size, self.args.workers)
@@ -30,7 +32,7 @@ class Tester:
                                num_classes=rssraiImage.num_classes,
                                in_c=rssraiImage.in_c)
 
-        if self.args.check_point_id != None:
+        if self.args.check_point_id is not None:
             self.best_pred, self.start_epoch, model_state_dict, optimizer_state_dict = self.saver.load_checkpoint()
             self.model.load_state_dict(model_state_dict)
             del self.best_pred

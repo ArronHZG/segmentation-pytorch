@@ -1,4 +1,6 @@
-mxnet-cu101mkl
+mxnet-cu100mkl
+gluoncv
+gluonnlp
 torch
 torchvision
 scipy
