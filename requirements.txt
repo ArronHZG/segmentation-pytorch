@@ -14,5 +14,4 @@ TensorBoardX
 tqdm
 pillow
 albumentations
-apex
 torchsummary
