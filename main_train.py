@@ -51,8 +51,7 @@ class Trainer:
         if self.args.check_point_id is not None:
             self.best_pred, self.start_epoch, model_state_dict, optimizer_state_dict = self.saver.load_checkpoint()
             self.model.load_state_dict(model_state_dict)
-            if not args.reset_lr:
-                self.optimizer.load_state_dict(optimizer_state_dict)
+            self.optimizer.load_state_dict(optimizer_state_dict)
 
         # self.criterion = loss.CrossEntropyLossWithOHEM( 0.7 )
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=255)
@@ -184,7 +183,7 @@ class Trainer:
         return new_pred
 
     def auto_reset_learning_rate(self):
-        if self.optimizer.param_groups[0]['lr'] <= 5e-7:
+        if self.optimizer.param_groups[0]['lr'] <= 1e-4:
             for param_group in self.optimizer.param_groups:
                 param_group['lr'] = self.args.lr
 
@@ -199,7 +198,7 @@ if __name__ == "__main__":
     args.dataset = 'rssrai'
     args.model = 'FCN'
     args.backbone = 'resnet50'
-    # args.check_point_id = 2
+    args.check_point_id = 3
     args.batch_size = 70
     args.base_size = 256
     args.crop_size = 256
@@ -208,9 +207,6 @@ if __name__ == "__main__":
     args.epochs = 1000
     args.lr = 0.01
     args.workers = 12
-
-    args.reset_lr = True
-
     print(args)
     trainer = Trainer()
     print('Total Epoches:', trainer.epochs)
