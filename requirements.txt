@@ -1,3 +1,4 @@
+numpy
 mxnet-cu100mkl
 gluoncv
 gluonnlp

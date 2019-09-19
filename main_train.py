@@ -1,5 +1,6 @@
 from collections import namedtuple
 
+import numpy as np
 import torch
 from tqdm import tqdm
 
@@ -182,6 +183,11 @@ class Trainer:
 
         return new_pred
 
+    def auto_reset_learning_rate(self):
+        if self.optimizer.param_groups[0]['lr'] <= 5e-7:
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = self.args.lr
+
 
 if __name__ == "__main__":
 
@@ -214,3 +220,4 @@ if __name__ == "__main__":
         if not args.no_val:
             new_pred = trainer.validation(epoch)
             trainer.scheduler.step(new_pred)
+            trainer.auto_reset_learning_rate()
