@@ -3,19 +3,18 @@ import os
 import shutil
 import time
 
+import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
+import torch.nn as nn
+import torch.nn.parallel
 import torch.optim
 import torch.utils.data
 import torch.utils.data.distributed
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
+import torchvision
 import torchvision.models as models
-
-import numpy as np
+import torchvision.transforms as transforms
 
 try:
     from apex.parallel import DistributedDataParallel as DDP
@@ -31,22 +30,22 @@ def fast_collate(batch):
     targets = torch.tensor([target[1] for target in batch], dtype=torch.int64)
     w = imgs[0].size[0]
     h = imgs[0].size[1]
-    tensor = torch.zeros( (len(imgs), 3, h, w), dtype=torch.uint8 )
+    tensor = torch.zeros((len(imgs), 3, h, w), dtype=torch.uint8)
     for i, img in enumerate(imgs):
         nump_array = np.asarray(img, dtype=np.uint8)
-        if(nump_array.ndim < 3):
+        if (nump_array.ndim < 3):
             nump_array = np.expand_dims(nump_array, axis=-1)
         nump_array = np.rollaxis(nump_array, 2)
 
         tensor[i] += torch.from_numpy(nump_array)
-        
+
     return tensor, targets
 
 
 def parse():
     model_names = sorted(name for name in models.__dict__
-                     if name.islower() and not name.startswith("__")
-                     and callable(models.__dict__[name]))
+                         if name.islower() and not name.startswith("__")
+                         and callable(models.__dict__[name]))
 
     parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
     parser.add_argument('data', metavar='DIR',
@@ -54,8 +53,8 @@ def parse():
     parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet18',
                         choices=model_names,
                         help='model architecture: ' +
-                        ' | '.join(model_names) +
-                        ' (default: resnet18)')
+                             ' | '.join(model_names) +
+                             ' (default: resnet18)')
     parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                         help='number of data loading workers (default: 4)')
     parser.add_argument('--epochs', default=90, type=int, metavar='N',
@@ -65,7 +64,8 @@ def parse():
     parser.add_argument('-b', '--batch-size', default=256, type=int,
                         metavar='N', help='mini-batch size per process (default: 256)')
     parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
-                        metavar='LR', help='Initial learning rate.  Will be scaled by <global batch size>/256: args.lr = args.lr*float(args.batch_size*args.world_size)/256.  A warmup schedule will also be applied over the first 5 epochs.')
+                        metavar='LR',
+                        help='Initial learning rate.  Will be scaled by <global batch size>/256: args.lr = args.lr*float(args.batch_size*args.world_size)/256.  A warmup schedule will also be applied over the first 5 epochs.')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                         help='momentum')
     parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
@@ -92,6 +92,7 @@ def parse():
     parser.add_argument('--loss-scale', type=str, default=None)
     args = parser.parse_args()
     return args
+
 
 def main():
     global best_prec1, args
@@ -143,7 +144,7 @@ def main():
     model = model.cuda()
 
     # Scale learning rate based on global batch size
-    args.lr = args.lr*float(args.batch_size*args.world_size)/256. 
+    args.lr = args.lr * float(args.batch_size * args.world_size) / 256.
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
                                 weight_decay=args.weight_decay)
@@ -176,7 +177,7 @@ def main():
         def resume():
             if os.path.isfile(args.resume):
                 print("=> loading checkpoint '{}'".format(args.resume))
-                checkpoint = torch.load(args.resume, map_location = lambda storage, loc: storage.cuda(args.gpu))
+                checkpoint = torch.load(args.resume, map_location=lambda storage, loc: storage.cuda(args.gpu))
                 args.start_epoch = checkpoint['epoch']
                 best_prec1 = checkpoint['best_prec1']
                 model.load_state_dict(checkpoint['state_dict'])
@@ -185,13 +186,10 @@ def main():
                       .format(args.resume, checkpoint['epoch']))
             else:
                 print("=> no checkpoint found at '{}'".format(args.resume))
+
         resume()
 
-    # Data loading code
-    traindir = os.path.join(args.data, 'train')
-    valdir = os.path.join(args.data, 'val')
-
-    if(args.arch == "inception_v3"):
+    if (args.arch == "inception_v3"):
         raise RuntimeError("Currently, inception_v3 is not supported by this example.")
         # crop_size = 299
         # val_size = 320 # I chose this value arbitrarily, we can adjust.
@@ -199,35 +197,50 @@ def main():
         crop_size = 224
         val_size = 256
 
-    train_dataset = datasets.ImageFolder(
-        traindir,
-        transforms.Compose([
-            transforms.RandomResizedCrop(crop_size),
-            transforms.RandomHorizontalFlip(),
-            # transforms.ToTensor(), Too slow
-            # normalize,
-        ]))
-    val_dataset = datasets.ImageFolder(valdir, transforms.Compose([
-            transforms.Resize(val_size),
-            transforms.CenterCrop(crop_size),
-        ]))
+    # Data loading code
+    # traindir = os.path.join(args.data, 'train')
+    # valdir = os.path.join(args.data, 'val')
+    #
+    # train_dataset = datasets.ImageFolder(
+    #     traindir,
+    #     transforms.Compose([
+    #         transforms.RandomResizedCrop(crop_size),
+    #         transforms.RandomHorizontalFlip(),
+    #         # transforms.ToTensor(), Too slow
+    #         # normalize,
+    #     ]))
+    # val_dataset = datasets.ImageFolder(valdir, transforms.Compose([
+    #     transforms.Resize(val_size),
+    #     transforms.CenterCrop(crop_size),
+    # ]))
+
+    transform = transforms.Compose(
+        [transforms.ToTensor(),
+         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+    train_set = torchvision.datasets.CIFAR10(root='~/dataSet/cifar10', train=True,
+                                             download=True, transform=transform)
+
+    test_set = torchvision.datasets.CIFAR10(root='~/dataSet/cifar10', train=False,
+                                            download=True, transform=transform)
 
     train_sampler = None
     val_sampler = None
     if args.distributed:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
-        val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset)
+        train_sampler = torch.utils.data.distributed.DistributedSampler(train_set)
+        val_sampler = torch.utils.data.distributed.DistributedSampler(test_set)
 
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
-        num_workers=args.workers, pin_memory=True, sampler=train_sampler, collate_fn=fast_collate)
+        train_set,
+        batch_size=args.batch_size, shuffle=(train_sampler is None),
+        num_workers=args.workers, pin_memory=True,
+        sampler=train_sampler)
 
     val_loader = torch.utils.data.DataLoader(
-        val_dataset,
+        test_set,
         batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True,
-        sampler=val_sampler,
-        collate_fn=fast_collate)
+        sampler=val_sampler)
 
     if args.evaluate:
         validate(val_loader, model, criterion)
@@ -252,15 +265,16 @@ def main():
                 'arch': args.arch,
                 'state_dict': model.state_dict(),
                 'best_prec1': best_prec1,
-                'optimizer' : optimizer.state_dict(),
+                'optimizer': optimizer.state_dict(),
             }, is_best)
+
 
 class data_prefetcher():
     def __init__(self, loader):
         self.loader = iter(loader)
         self.stream = torch.cuda.Stream()
-        self.mean = torch.tensor([0.485 * 255, 0.456 * 255, 0.406 * 255]).cuda().view(1,3,1,1)
-        self.std = torch.tensor([0.229 * 255, 0.224 * 255, 0.225 * 255]).cuda().view(1,3,1,1)
+        self.mean = torch.tensor([0.485 * 255, 0.456 * 255, 0.406 * 255]).cuda().view(1, 3, 1, 1)
+        self.std = torch.tensor([0.229 * 255, 0.224 * 255, 0.225 * 255]).cuda().view(1, 3, 1, 1)
         # With Amp, it isn't necessary to manually convert data to half.
         # if args.fp16:
         #     self.mean = self.mean.half()
@@ -297,7 +311,7 @@ class data_prefetcher():
             # else:
             self.next_input = self.next_input.float()
             self.next_input = self.next_input.sub_(self.mean).div_(self.std)
-            
+
     def next(self):
         torch.cuda.current_stream().wait_stream(self.stream)
         input = self.next_input
@@ -319,49 +333,58 @@ def train(train_loader, model, criterion, optimizer, epoch):
     # switch to train mode
     model.train()
     end = time.time()
+    #
+    # prefetcher = data_prefetcher(train_loader)
+    # input, target = prefetcher.next()
+    for i, data in enumerate(train_loader, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        input, target = data
+        input, target = input.cuda(), target.cuda()
 
-    prefetcher = data_prefetcher(train_loader)
-    input, target = prefetcher.next()
-    i = 0
-    while input is not None:
-        i += 1
         if args.prof >= 0 and i == args.prof:
             print("Profiling begun at iteration {}".format(i))
             torch.cuda.cudart().cudaProfilerStart()
 
-        if args.prof >= 0: torch.cuda.nvtx.range_push("Body of iteration {}".format(i))
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_push("Body of iteration {}".format(i))
 
         adjust_learning_rate(optimizer, epoch, i, len(train_loader))
 
         # compute output
-        if args.prof >= 0: torch.cuda.nvtx.range_push("forward")
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_push("forward")
         output = model(input)
-        if args.prof >= 0: torch.cuda.nvtx.range_pop()
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_pop()
         loss = criterion(output, target)
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
 
-        if args.prof >= 0: torch.cuda.nvtx.range_push("backward")
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_push("backward")
         with amp.scale_loss(loss, optimizer) as scaled_loss:
             scaled_loss.backward()
-        if args.prof >= 0: torch.cuda.nvtx.range_pop()
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_pop()
 
         # for param in model.parameters():
         #     print(param.data.double().sum().item(), param.grad.data.double().sum().item())
 
-        if args.prof >= 0: torch.cuda.nvtx.range_push("optimizer.step()")
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_push("optimizer.step()")
         optimizer.step()
-        if args.prof >= 0: torch.cuda.nvtx.range_pop()
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_pop()
 
-        if i%args.print_freq == 0:
+        if i % args.print_freq == 0:
             # Every print_freq iterations, check the loss, accuracy, and speed.
             # For best performance, it doesn't make sense to print these metrics every
             # iteration, since they incur an allreduce and some host<->device syncs.
 
             # Measure accuracy
             prec1, prec5 = accuracy(output.data, target, topk=(1, 5))
-   
+
             # Average loss and accuracy across processes for logging 
             if args.distributed:
                 reduced_loss = reduce_tensor(loss.data)
@@ -369,14 +392,14 @@ def train(train_loader, model, criterion, optimizer, epoch):
                 prec5 = reduce_tensor(prec5)
             else:
                 reduced_loss = loss.data
-   
+
             # to_python_float incurs a host<->device sync
             losses.update(to_python_float(reduced_loss), input.size(0))
             top1.update(to_python_float(prec1), input.size(0))
             top5.update(to_python_float(prec5), input.size(0))
-    
+
             torch.cuda.synchronize()
-            batch_time.update((time.time() - end)/args.print_freq)
+            batch_time.update((time.time() - end) / args.print_freq)
             end = time.time()
 
             if args.local_rank == 0:
@@ -386,17 +409,19 @@ def train(train_loader, model, criterion, optimizer, epoch):
                       'Loss {loss.val:.10f} ({loss.avg:.4f})\t'
                       'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                       'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                       epoch, i, len(train_loader),
-                       args.world_size*args.batch_size/batch_time.val,
-                       args.world_size*args.batch_size/batch_time.avg,
-                       batch_time=batch_time,
-                       loss=losses, top1=top1, top5=top5))
-        if args.prof >= 0: torch.cuda.nvtx.range_push("prefetcher.next()")
-        input, target = prefetcher.next()
-        if args.prof >= 0: torch.cuda.nvtx.range_pop()
+                    epoch, i, len(train_loader),
+                    args.world_size * args.batch_size / batch_time.val,
+                    args.world_size * args.batch_size / batch_time.avg,
+                    batch_time=batch_time,
+                    loss=losses, top1=top1, top5=top5))
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_push("train_loader.next()")
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_pop()
 
         # Pop range "Body of iteration {}".format(i)
-        if args.prof >= 0: torch.cuda.nvtx.range_pop()
+        if args.prof >= 0:
+            torch.cuda.nvtx.range_pop()
 
         if args.prof >= 0 and i == args.prof + 10:
             print("Profiling ended at iteration {}".format(i))
@@ -415,11 +440,10 @@ def validate(val_loader, model, criterion):
 
     end = time.time()
 
-    prefetcher = data_prefetcher(val_loader)
-    input, target = prefetcher.next()
-    i = 0
-    while input is not None:
-        i += 1
+    for i, data in enumerate(val_loader, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        input, target = data
+        input, target = input.cuda(), target.cuda()
 
         # compute output
         with torch.no_grad():
@@ -452,13 +476,11 @@ def validate(val_loader, model, criterion):
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                   'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                   'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                   i, len(val_loader),
-                   args.world_size * args.batch_size / batch_time.val,
-                   args.world_size * args.batch_size / batch_time.avg,
-                   batch_time=batch_time, loss=losses,
-                   top1=top1, top5=top5))
-
-        input, target = prefetcher.next()
+                i, len(val_loader),
+                args.world_size * args.batch_size / batch_time.val,
+                args.world_size * args.batch_size / batch_time.avg,
+                batch_time=batch_time, loss=losses,
+                top1=top1, top5=top5))
 
     print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
           .format(top1=top1, top5=top5))
@@ -474,6 +496,7 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self):
         self.reset()
 
@@ -497,11 +520,11 @@ def adjust_learning_rate(optimizer, epoch, step, len_epoch):
     if epoch >= 80:
         factor = factor + 1
 
-    lr = args.lr*(0.1**factor)
+    lr = args.lr * (0.1 ** factor)
 
     """Warmup"""
     if epoch < 5:
-        lr = lr*float(1 + step + epoch*len_epoch)/(5.*len_epoch)
+        lr = lr * float(1 + step + epoch * len_epoch) / (5. * len_epoch)
 
     # if(args.local_rank == 0):
     #     print("epoch = {}, step = {}, lr = {}".format(epoch, step, lr))
@@ -531,6 +554,7 @@ def reduce_tensor(tensor):
     dist.all_reduce(rt, op=dist.reduce_op.SUM)
     rt /= args.world_size
     return rt
+
 
 if __name__ == '__main__':
     main()
