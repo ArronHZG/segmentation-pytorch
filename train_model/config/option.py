@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import torch
 
@@ -52,8 +53,6 @@ class Options():
                             metavar='M', help='momentum (default: 0.9)')
         parser.add_argument('--weight-decay', type=float, default=5e-4,
                             metavar='M', help='w-decay (default: 1e-4)')
-        # cuda, seed and logging
-        parser.add_argument('--no-cuda', action='store_true', default=False, help='disables CUDA training')
         # apex  a Pytorch extension with NVIDIA-maintained utilities to streamline mixed precision and distributed training
         parser.add_argument('--apex', type=int, default=2, choices=[0, 1, 2, 3], help='Automatic Mixed Precision')
 
@@ -120,4 +119,8 @@ class Options():
                 'rssrai': 0.1,
             }
             args.lr = lrs[args.dataset.lower()] / 256 * args.batch_size
+
+        # Use CUDA
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
+        args.cuda = torch.cuda.is_available()
         return args

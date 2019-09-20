@@ -45,6 +45,9 @@ class Trainer:
                                num_classes=self.class_num,
                                in_c=self.val_dataset.in_c)
 
+        print("==> creating model '{}'".format(self.args.model))
+        print('    Total params: %.2fM' % (sum(p.numel() for p in self.model.parameters()) / 1000000.0))
+
         self.optimizer = get_optimizer(optim_name=self.args.optim, parameters=self.model.parameters(),
                                        lr=self.args.lr)
 
@@ -188,11 +191,15 @@ class Trainer:
             for param_group in self.optimizer.param_groups:
                 param_group['lr'] = self.args.lr
 
+    def get_lr(self):
+        return self.optimizer.param_groups[0]['lr']
+
 
 if __name__ == "__main__":
 
-    # torch.backends.cudnn.deterministic = True
-    # torch.backends.cudnn.benchmark = False
+    # pytorch如何能够保证模型的可重复性
+    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.deterministic = True
 
     args = Options().parse()
 

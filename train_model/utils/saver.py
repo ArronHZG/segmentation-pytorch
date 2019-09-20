@@ -2,13 +2,10 @@ import glob
 import os
 from collections import OrderedDict
 
-import numpy as np
 import torch
 
-from train_model.dataloader.rssrai_tools.split_rssrai import save_image
 
-
-class Saver():
+class Saver:
 
     def __init__(self, args):
         self.args = args
@@ -29,7 +26,6 @@ class Saver():
 
     def save_checkpoint(self, state, is_best, metric, filename='checkpoint.pth'):
         """Saves checkpoint to disk"""
-        metric
         with open(os.path.join(self.experiment_dir, 'best_pred.txt'), 'a+') as f:
             f.write(f"[epoch {str(state['epoch']).zfill(3)}] {metric}\n")
         if is_best:
