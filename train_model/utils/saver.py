@@ -1,6 +1,7 @@
 import glob
 import os
 from collections import OrderedDict
+from time import sleep
 
 import torch
 
@@ -11,17 +12,19 @@ class Saver:
         self.args = args
         self.directory = os.path.join('run', args.dataset, args.model + "-" + args.backbone)
         if None is self.args.check_point_id:
-            self.runs = glob.glob(os.path.join(self.directory, 'experiment_*'))
-            run_ids = sorted([int(experiment.split('_')[-1]) for experiment in self.runs]) if self.runs else [0]
-            run_id = run_ids[-1] + 1
-            self.experiment_dir = os.path.join(self.directory, 'experiment_{}'.format(str(run_id)))
-            if not os.path.exists(self.experiment_dir):
-                os.makedirs(self.experiment_dir)
+            pass
+            # self.runs = glob.glob(os.path.join(self.directory, 'experiment_*'))
+            # run_ids = sorted([int(experiment.split('_')[-1]) for experiment in self.runs]) if self.runs else [0]
+            # run_id = run_ids[-1] + 1
+            # self.experiment_dir = os.path.join(self.directory, 'experiment_{}'.format(str(run_id)))
+            # if not os.path.exists(self.experiment_dir):
+            #     os.makedirs(self.experiment_dir)
         else:
             run_id = self.args.check_point_id
             self.experiment_dir = os.path.join(self.directory, 'experiment_{}'.format(str(run_id)))
             if not os.path.exists(self.experiment_dir):
-                raise FileNotFoundError(self.experiment_dir)
+                sleep(1)
+                os.makedirs(self.experiment_dir)
         print(f"run_id  {run_id}")
 
     def save_checkpoint(self, state, is_best, metric, filename='checkpoint.pth'):
@@ -57,3 +60,7 @@ class Saver:
         for key, val in p.items():
             log_file.write(key + ':' + str(val) + '\n')
         log_file.close()
+
+
+
+

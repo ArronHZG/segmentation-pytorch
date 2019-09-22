@@ -15,7 +15,7 @@ class Options():
                             help='backbone name (default: resnet50)')
         parser.add_argument('--dataset', type=str, default='rssrai',
                             help='dataset name (default: rssrai)')
-        parser.add_argument('--workers', type=int, default=8,
+        parser.add_argument('--num-workers', type=int, default=4,
                             metavar='N', help='dataloader threads')
         parser.add_argument('--base-size', type=int, default=513,
                             help='base image size')
@@ -53,8 +53,17 @@ class Options():
                             metavar='M', help='momentum (default: 0.9)')
         parser.add_argument('--weight-decay', type=float, default=5e-4,
                             metavar='M', help='w-decay (default: 1e-4)')
-        # apex  a Pytorch extension with NVIDIA-maintained utilities to streamline mixed precision and distributed training
+        # apex
+        # a Pytorch extension with NVIDIA-maintained utilities to streamline mixed precision and distributed training
         parser.add_argument('--apex', type=int, default=2, choices=[0, 1, 2, 3], help='Automatic Mixed Precision')
+        parser.add_argument('--keep-batchnorm-fp32', type=str, default=None)
+        parser.add_argument('--loss-scale', type=str, default=None)
+
+        # cuda
+        parser.add_argument('--deterministic', action='store_false')
+        parser.add_argument("--local_rank", default=0, type=int)
+        parser.add_argument('--sync_bn', action='store_true',
+                            help='enabling apex sync BN.')
 
         # # finetuning pre-trained net
         # parser.add_argument('--ft', action='store_true', default= False,
@@ -93,7 +102,6 @@ class Options():
 
     def parse(self):
         args = self.parser.parse_args()
-        args.cuda = not args.no_cuda and torch.cuda.is_available()
         # default settings for epochs, batch_size and lr
         if args.epochs is None:
             epoches = {
@@ -103,24 +111,17 @@ class Options():
                 'ade20k': 160,
                 'cityscapes': 180,
                 'rssrai': 100,
+                'rssrai': 100,
             }
             args.epochs = epoches[args.dataset.lower()]
         if args.batch_size is None:
             args.batch_size = 4 * torch.cuda.device_count()
         if args.test_batch_size is None:
             args.test_batch_size = args.batch_size
-        if args.lr is None:
-            lrs = {
-                'pascal_voc': 0.1,
-                'pascal_aug': 0.1,
-                'pcontext': 0.1,
-                'ade20k': 0.1,
-                'cityscapes': 0.1,
-                'rssrai': 0.1,
-            }
-            args.lr = lrs[args.dataset.lower()] / 256 * args.batch_size
 
         # Use CUDA
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
+        # os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
         args.cuda = torch.cuda.is_available()
+        # Use apex
+        args.opt_level = f"O{args.apex}"
         return args

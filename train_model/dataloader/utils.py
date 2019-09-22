@@ -8,19 +8,9 @@ def make_data_loader(dataset_name, base_size, crop_size, batch_size, num_workers
     if dataset_name == 'rssrai':
         train_set = rssrai.Rssrai(type='train', base_size=base_size, crop_size=crop_size)
         val_set = rssrai.Rssrai(type='valid', base_size=base_size, crop_size=crop_size)
-        test_set = rssrai.Rssrai(type='test', base_size=base_size, crop_size=crop_size)
         num_class = train_set.NUM_CLASSES
 
-        train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, pin_memory=True,
-                                  num_workers=num_workers)
-        val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, pin_memory=True,
-                                num_workers=num_workers)
-        test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True,
-                                 num_workers=num_workers)
-
-        dataset = val_set
-
-        return train_loader, val_loader, test_loader, num_class, dataset
+        return train_set, val_set, num_class
 
     if dataset_name == 'voc2012':
 

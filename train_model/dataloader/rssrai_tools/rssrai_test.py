@@ -1,12 +1,10 @@
+import gc
 import math
 import os
-import time
-from collections import OrderedDict
 from glob import glob
 from pprint import pprint
 
 import albumentations as A
-import gc
 import numpy as np
 import torch
 import torch.utils.data as data
@@ -14,60 +12,10 @@ from PIL import Image
 from torch.utils.data import DataLoader
 
 from train_model.config.mypath import Path
-
-color_name_map = OrderedDict({(0, 200, 0): '水田',
-                              (150, 250, 0): '水浇地',
-                              (150, 200, 150): '旱耕地',
-                              (200, 0, 200): '园地',
-                              (150, 0, 250): '乔木林地',
-                              (150, 150, 250): '灌木林地',
-                              (250, 200, 0): '天然草地',
-                              (200, 200, 0): '人工草地',
-                              (200, 0, 0): '工业用地',
-                              (250, 0, 150): '城市住宅',
-                              (200, 150, 150): '村镇住宅',
-                              (250, 150, 150): '交通运输',
-                              (0, 0, 200): '河流',
-                              (0, 150, 200): '湖泊',
-                              (0, 200, 250): '坑塘',
-                              (0, 0, 0): '其他类别'})
-
-color_index_map = OrderedDict({(0, 200, 0): 0,
-                               (150, 250, 0): 1,
-                               (150, 200, 150): 2,
-                               (200, 0, 200): 3,
-                               (150, 0, 250): 4,
-                               (150, 150, 250): 5,
-                               (250, 200, 0): 6,
-                               (200, 200, 0): 7,
-                               (200, 0, 0): 8,
-                               (250, 0, 150): 9,
-                               (200, 150, 150): 10,
-                               (250, 150, 150): 11,
-                               (0, 0, 200): 12,
-                               (0, 150, 200): 13,
-                               (0, 200, 250): 14,
-                               (0, 0, 0): 15})
-
-color_list = np.array([[0, 200, 0],
-                       [150, 250, 0],
-                       [150, 200, 150],
-                       [200, 0, 200],
-                       [150, 0, 250],
-                       [150, 150, 250],
-                       [250, 200, 0],
-                       [200, 200, 0],
-                       [200, 0, 0],
-                       [250, 0, 150],
-                       [200, 150, 150],
-                       [250, 150, 150],
-                       [0, 0, 200],
-                       [0, 150, 200],
-                       [0, 200, 250],
-                       [0, 0, 0]])
+from train_model.dataloader.rssrai_tools.rssrai_utils import mean, std, color_list
 
 
-class RssraiTestOneImage():
+class RssraiTestOneImage:
     '''
     一次测试一张大图
     使用训练集原图作为评价指标数据，验证测试方法的有效性
@@ -84,8 +32,8 @@ class RssraiTestOneImage():
         self.in_c = 4
         self.num_classes = 16
 
-        self.mean = (0.52891074, 0.38070734, 0.40119018, 0.36884733)
-        self.std = (0.24007008, 0.23784, 0.22267079, 0.21865861)
+        self.mean = mean
+        self.std = std
 
         self.images = {"origin": None,
                        "vertical": None,

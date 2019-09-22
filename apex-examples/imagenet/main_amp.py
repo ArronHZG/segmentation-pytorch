@@ -82,7 +82,6 @@ def parse():
     parser.add_argument('--prof', default=-1, type=int,
                         help='Only run 10 iterations for profiling.')
     parser.add_argument('--deterministic', action='store_true')
-
     parser.add_argument("--local_rank", default=0, type=int)
     parser.add_argument('--sync_bn', action='store_true',
                         help='enabling apex sync BN.')
@@ -101,7 +100,6 @@ def main():
     print("opt_level = {}".format(args.opt_level))
     print("keep_batchnorm_fp32 = {}".format(args.keep_batchnorm_fp32), type(args.keep_batchnorm_fp32))
     print("loss_scale = {}".format(args.loss_scale), type(args.loss_scale))
-
     print("\nCUDNN VERSION: {}\n".format(torch.backends.cudnn.version()))
 
     cudnn.benchmark = True
@@ -113,11 +111,12 @@ def main():
         torch.set_printoptions(precision=10)
 
     args.distributed = False
-    if 'WORLD_SIZE' in os.environ:
-        args.distributed = int(os.environ['WORLD_SIZE']) > 1
-
     args.gpu = 0
     args.world_size = 1
+
+    if 'WORLD_SIZE' in os.environ:
+        args.distributed = int(os.environ['WORLD_SIZE']) > 1
+    print(f"world_size {int(os.environ['WORLD_SIZE'])}")
 
     if args.distributed:
         args.gpu = args.local_rank

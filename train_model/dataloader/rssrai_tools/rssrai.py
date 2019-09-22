@@ -1,6 +1,5 @@
 import os
 import random
-from collections import OrderedDict
 from glob import glob
 from pprint import pprint
 
@@ -13,57 +12,7 @@ from PIL import Image
 from torch.utils.data import DataLoader
 
 from train_model.config.mypath import Path
-
-color_name_map = OrderedDict({(0, 200, 0): '水田',
-                              (150, 250, 0): '水浇地',
-                              (150, 200, 150): '旱耕地',
-                              (200, 0, 200): '园地',
-                              (150, 0, 250): '乔木林地',
-                              (150, 150, 250): '灌木林地',
-                              (250, 200, 0): '天然草地',
-                              (200, 200, 0): '人工草地',
-                              (200, 0, 0): '工业用地',
-                              (250, 0, 150): '城市住宅',
-                              (200, 150, 150): '村镇住宅',
-                              (250, 150, 150): '交通运输',
-                              (0, 0, 200): '河流',
-                              (0, 150, 200): '湖泊',
-                              (0, 200, 250): '坑塘',
-                              (0, 0, 0): '其他类别'})
-
-color_index_map = OrderedDict({(0, 200, 0): 0,
-                               (150, 250, 0): 1,
-                               (150, 200, 150): 2,
-                               (200, 0, 200): 3,
-                               (150, 0, 250): 4,
-                               (150, 150, 250): 5,
-                               (250, 200, 0): 6,
-                               (200, 200, 0): 7,
-                               (200, 0, 0): 8,
-                               (250, 0, 150): 9,
-                               (200, 150, 150): 10,
-                               (250, 150, 150): 11,
-                               (0, 0, 200): 12,
-                               (0, 150, 200): 13,
-                               (0, 200, 250): 14,
-                               (0, 0, 0): 15})
-
-color_list = np.array([[0, 200, 0],
-                       [150, 250, 0],
-                       [150, 200, 150],
-                       [200, 0, 200],
-                       [150, 0, 250],
-                       [150, 150, 250],
-                       [250, 200, 0],
-                       [200, 200, 0],
-                       [200, 0, 0],
-                       [250, 0, 150],
-                       [200, 150, 150],
-                       [250, 150, 150],
-                       [0, 0, 200],
-                       [0, 150, 200],
-                       [0, 200, 250],
-                       [0, 0, 0]])
+from train_model.dataloader.rssrai_tools.rssrai_utils import mean, std, encode_segmap, decode_segmap
 
 
 class Rssrai(data.Dataset):
@@ -76,8 +25,8 @@ class Rssrai(data.Dataset):
         self._base_dir = base_dir
         self.type = type
         self.in_c = 4
-        self.mean = (0.52891074, 0.38070734, 0.40119018, 0.36884733)
-        self.std = (0.24007008, 0.23784, 0.22267079, 0.21865861)
+        self.mean = mean
+        self.std = std
         self.crop_size = crop_size
         self.base_size = base_size
         self.im_ids = []
@@ -181,7 +130,7 @@ class Rssrai(data.Dataset):
 
         label_pil = Image.open(os.path.join(self._label_dir, label_name))
         label_np = np.array(label_pil)
-        label_mask = self.encode_segmap(label_np)
+        label_mask = encode_segmap(label_np)
 
         return {'image': image_np, 'label': label_mask}
 
@@ -199,50 +148,6 @@ class Rssrai(data.Dataset):
         if self.type != "test":
             sample['label'] = torch.from_numpy(sample['label']).long()
         return sample
-
-    def decode_seg_map_sequence(self, label_masks):
-        rgb_masks = []
-        for label_mask in label_masks:
-            rgb_mask = self.decode_segmap(label_mask)
-            rgb_masks.append(rgb_mask)
-        rgb_masks = torch.from_numpy(np.array(rgb_masks).transpose([0, 3, 1, 2]))
-        return rgb_masks
-
-    def decode_segmap(self, label_mask):
-        """Decode segmentation class labels into a color image
-        Args:
-            label_mask (np.ndarray): an (M,N) array of integer values denoting
-        Returns:
-            (np.ndarray, optional): the resulting decoded color image.
-        """
-        r = label_mask.copy()
-        g = label_mask.copy()
-        b = label_mask.copy()
-        for ll in range(0, len(color_list)):
-            r[label_mask == ll] = color_list[ll, 0]
-            g[label_mask == ll] = color_list[ll, 1]
-            b[label_mask == ll] = color_list[ll, 2]
-        rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], 3))
-        rgb[:, :, 0] = r
-        rgb[:, :, 1] = g
-        rgb[:, :, 2] = b
-        return rgb
-
-    def encode_segmap(self, label_image):
-        """Encode segmentation label images as pascal classes
-        Args:
-            label_image (np.ndarray): raw segmentation label image of dimension
-              (M, N, 3), in which the Pascal classes are encoded as colours.
-        Returns:
-            (np.ndarray): class map with dimensions (M,N), where the value at
-            a given location is the integer denoting the class index.
-        """
-        label_image = label_image.astype(int)
-        label_mask = np.zeros((label_image.shape[0], label_image.shape[1]), dtype=np.int16)
-        for ii, label in enumerate(color_list):
-            label_mask[np.where(np.all(label_image == label, axis=-1))[:2]] = ii
-        label_mask = label_mask.astype(int)
-        return label_mask
 
 
 def testData():
@@ -268,7 +173,7 @@ def testData():
             gt = sample['label'].numpy()
             img_tmp = np.transpose(img[jj], axes=[1, 2, 0])
             tmp = gt[jj]
-            segmap = rssrai.decode_segmap(tmp)
+            segmap = decode_segmap(tmp)
             img_tmp *= rssrai.std[1:]
             img_tmp += rssrai.mean[1:]
             img_tmp *= 255.0
