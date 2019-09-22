@@ -102,7 +102,7 @@ class Trainer:
 
         print(f"=> creating  scheduler 'ReduceLROnPlateau'")
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'max',
-                                                                    factor=0.9,
+                                                                    factor=0.8,
                                                                     patience=3,
                                                                     verbose=True)
 
@@ -245,7 +245,7 @@ class Trainer:
         return new_pred
 
     def auto_reset_learning_rate(self):
-        if self.optimizer.param_groups[0]['lr'] <= 1e-4:
+        if self.optimizer.param_groups[0]['lr'] <= 3e-4:
             for param_group in self.optimizer.param_groups:
                 param_group['lr'] = self.args.lr
 
@@ -295,7 +295,7 @@ if __name__ == "__main__":
     args.optim = "SGD"
     args.epochs = 1000
     args.lr = 0.01
-    args.workers = 8
+    args.workers = 12
     args.check_point_id = 1
     args.experiment_dir_existed = False
     print(args)

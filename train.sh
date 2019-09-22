@@ -1,1 +1,1 @@
-CUDA_VISIBLE_DEVICES=0 python main_train.py
+python -m torch.distributed.launch --nproc_per_node=2 main_train.py

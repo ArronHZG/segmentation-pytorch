@@ -44,7 +44,7 @@ class Rssrai(data.Dataset):
             self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
             self._label_dir = os.path.join(self._base_dir, 'split_train', 'label')
 
-            self.len = 14000
+            self.len = 20000
 
         if self.type == 'valid':
             self._label_path_list = glob(os.path.join(self._base_dir, 'split_valid_256', 'label', '*.tif'))
