@@ -4,14 +4,14 @@ gluoncv
 gluonnlp
 torch
 torchvision
+torchsummary
+tensorflow-gpu==2.0.0-rc1
 scipy
 matplotlib
 pandas
 sklearn
-Cython
 progressbar
-TensorBoardX
 tqdm
 pillow
 albumentations
-torchsummary
+TensorBoardX
