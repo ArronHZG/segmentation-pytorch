@@ -13,7 +13,6 @@ from tqdm import tqdm
 from torch_model import get_model, get_optimizer
 from torch_model.blseg.metric import metric
 from train_model.config.option import Options
-from train_model.dataloader.rssrai_tools.rssrai_utils import visualize_batch_image
 from train_model.dataloader.utils import make_data_loader
 from train_model.utils.saver import Saver
 from train_model.utils.summaries import TensorboardSummary
@@ -213,9 +212,9 @@ class Trainer:
             self.valid_metric.kappa.update(output, target)
             self.valid_metric.pixacc.update(output, target)
 
-            visualize_batch_image(image,
-                                  target, output, epoch, i,
-                                  self.saver.experiment_dir)
+            # visualize_batch_image(image,
+            #                       target, output, epoch, i,
+            #                       self.saver.experiment_dir)
 
             # Fast test during the training
             new_pred = self.valid_metric.miou.get()
@@ -286,7 +285,7 @@ def init_distributed_cuda(args):
 if __name__ == "__main__":
 
     args = Options().parse()
-    args.dataset = 'rssrai'
+    args.dataset = 'xian'
     args.model = 'FCN'
     args.backbone = 'resnet50'
     args.batch_size = 100
