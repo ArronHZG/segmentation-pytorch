@@ -1,0 +1,41 @@
+from torch.utils.data import DataLoader
+
+from experiments.datasets.private.rssrai_tools import rssrai
+from experiments.datasets.voc2012 import pascal
+from experiments.datasets.private.xian import xian
+
+
+def make_data_loader(dataset_name, base_size, crop_size, batch_size, num_workers):
+
+    if dataset_name == 'xian':
+        train_set = xian.Xian(type='train')
+        val_set = xian.Xian(type='valid')
+        num_class = train_set.NUM_CLASSES
+
+        return train_set, val_set, num_class
+
+    if dataset_name == 'rssrai':
+        train_set = rssrai.Rssrai(type='train', base_size=base_size, crop_size=crop_size)
+        val_set = rssrai.Rssrai(type='valid', base_size=base_size, crop_size=crop_size)
+        num_class = train_set.NUM_CLASSES
+
+        return train_set, val_set, num_class
+
+    if dataset_name == 'voc2012':
+
+        train_set = pascal.VOCSegmentation(type='train', base_size=base_size, crop_size=crop_size)
+        val_set = pascal.VOCSegmentation(type='val', base_size=base_size, crop_size=crop_size)
+        num_class = train_set.NUM_CLASSES
+
+        train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, pin_memory=True,
+                                  num_workers=num_workers)
+        val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, pin_memory=True,
+                                num_workers=num_workers)
+        test_loader = None
+
+        dataset = val_set
+
+        return train_loader, val_loader, test_loader, num_class, dataset
+
+    else:
+        raise NotImplementedError
