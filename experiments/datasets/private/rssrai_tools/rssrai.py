@@ -7,20 +7,18 @@ import numpy as np
 import torch
 import torch.utils.data as data
 from PIL import Image
-
-from experiments.datasets.path import Path
-from experiments.datasets.private.rssrai_tools import mean, std, encode_segmap
-
+from .rssrai_utils import mean, std, encode_segmap
+from ...path import Path
 
 class Rssrai(data.Dataset):
     NUM_CLASSES = 16
 
-    def __init__(self, type='train', base_size=(512, 512), crop_size=(256, 256), base_dir=Path.db_root_dir('rssrai')):
+    def __init__(self, mode='train', base_size=(512, 512), crop_size=(256, 256), base_dir=Path.db_root_dir('rssrai')):
 
-        assert type in ['train', 'valid', 'test']
+        assert mode in ['train', 'valid', 'test']
         super().__init__()
         self._base_dir = base_dir
-        self.type = type
+        self.mode = mode
         self.in_c = 4
         self.mean = mean
         self.std = std
@@ -31,7 +29,7 @@ class Rssrai(data.Dataset):
         self.categories = []
 
         # 加载数据
-        if self.type == 'train':
+        if self.mode == 'train':
             # train_csv = os.path.join(self._base_dir, 'train_set.csv')
             # self._label_name_list = pd.read_csv(train_csv)["文件名"].values.tolist()
             self._label_path_list = glob(os.path.join(self._base_dir, 'split_train', 'label', '*.tif'))
@@ -43,7 +41,7 @@ class Rssrai(data.Dataset):
 
             self.len = 20000
 
-        if self.type == 'valid':
+        if self.mode == 'valid':
             self._label_path_list = glob(os.path.join(self._base_dir, 'split_valid_256', 'label', '*.tif'))
             self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
             self._image_dir = os.path.join(self._base_dir, 'split_valid_256', 'img')
@@ -52,7 +50,7 @@ class Rssrai(data.Dataset):
 
             self.len = len(self._label_name_list)
 
-        if self.type == 'test':
+        if self.mode == 'test':
             self._img_path_list = glob(os.path.join(self._base_dir, 'split_test_256', 'img', '*.tif'))
             self._img_name_list = [name.split('/')[-1] for name in self._img_path_list]
             self._image_dir = os.path.join(self._base_dir, 'split_test_256', 'img')
@@ -66,7 +64,7 @@ class Rssrai(data.Dataset):
         # return 10
 
     def __str__(self):
-        return 'Rssrai(split=' + str(self.type) + ')'
+        return 'Rssrai(split=' + str(self.mode) + ')'
 
     def get_numpy_image(self, index):
         '''
@@ -75,14 +73,14 @@ class Rssrai(data.Dataset):
         测试集按顺序选取
         '''
         sample = None
-        if self.type == 'train':
+        if self.mode == 'train':
             name = self._get_random_file_name()
             sample = self._read_file(name)
             sample = self._random_crop_and_enhance(sample)
-        if self.type == 'valid':
+        if self.mode == 'valid':
             sample = self._read_file(self._label_name_list[index])
             sample = self._valid_enhance(sample)
-        if self.type == 'test':
+        if self.mode == 'test':
             sample = self._read_test_file(self._img_name_list[index])
             sample = self._test_enhance(sample)
         # sample["image"] = sample["image"][:, :, 1:]
@@ -142,7 +140,7 @@ class Rssrai(data.Dataset):
 
     def transform(self, sample):
         sample['image'] = torch.from_numpy(sample['image']).permute(2, 0, 1)
-        if self.type != "test":
+        if self.mode != "test":
             sample['label'] = torch.from_numpy(sample['label']).long()
         return sample
 

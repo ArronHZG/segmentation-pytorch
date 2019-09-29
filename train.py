@@ -2,7 +2,6 @@ import os
 from collections import namedtuple
 
 import torch
-import torch.backends.cudnn as cudnn
 import torch.nn.parallel
 import torch.optim
 import torch.utils.data
@@ -10,12 +9,12 @@ import torch.utils.data.distributed
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from foundation import get_model, get_optimizer
-from foundation.blseg.metric import metric
-from experiments.option import Options
 from experiments.datasets.utils import make_data_loader
+from experiments.option import Options
 from experiments.utils.saver import Saver
 from experiments.utils.summaries import TensorboardSummary
+from foundation import get_model, get_optimizer
+from foundation.blseg.metric import metric
 
 try:
     import apex
@@ -32,7 +31,7 @@ class Trainer:
     def __init__(self, args):
         self.args = args
 
-        self.start_epoch = self.args.start_epoch
+        self.start_epoch = 1
 
         self.epochs = self.args.epochs
 
@@ -50,10 +49,8 @@ class Trainer:
         # Define Dataloader
         train_set, val_set, self.class_num = make_data_loader(
             dataset_name=self.args.dataset,
-            base_size=(self.args.base_size, self.args.base_size),
-            crop_size=(self.args.crop_size, self.args.crop_size),
-            batch_size=self.args.batch_size,
-            num_workers=self.args.workers
+            base_size=self.args.base_size,
+            crop_size=self.args.crop_size,
         )
         self.in_c = train_set.in_c
 
@@ -78,35 +75,35 @@ class Trainer:
                                      sampler=val_sampler)
 
         # Define network
-        print(f"=> creating model '{self.args.model}'")
+        print(f"=> creating model '{self.args.model}'", end=": ")
         self.model = get_model(model_name=self.args.model,
                                backbone=self.args.backbone,
                                num_classes=self.class_num,
                                in_c=self.in_c)
-        print('    Total params: %.2fM' % (sum(p.numel() for p in self.model.parameters()) / 1000000.0))
+        print('Total params: %.2fM' % (sum(p.numel() for p in self.model.parameters()) / 1000000.0))
 
         print(f"=> creating optimizer '{self.args.optim}'")
         self.optimizer = get_optimizer(optim_name=self.args.optim, parameters=self.model.parameters(),
                                        lr=self.args.lr)
 
         if self.args.check_point_id is not None and self.args.experiment_dir_existed is True:
-            print(f"=> reload  parameter")
+            print(f"=> reload  parameter from experiment_{self.args.check_point_id}")
             self.best_pred, self.start_epoch, model_state_dict, optimizer_state_dict = self.saver.load_checkpoint()
             self.model.load_state_dict(model_state_dict)
             self.optimizer.load_state_dict(optimizer_state_dict)
 
         # self.criterion = loss.CrossEntropyLossWithOHEM( 0.7 )
-        print(f"=> creating  criterion CrossEntropyLoss")
+        print(f"=> creating criterion 'CrossEntropyLoss'")
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=255)
 
-        print(f"=> creating  scheduler 'ReduceLROnPlateau'")
+        print(f"=> creating scheduler 'ReduceLROnPlateau'")
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'max',
                                                                     factor=0.8,
                                                                     patience=3,
                                                                     verbose=True)
 
         if args.sync_bn:
-            print("using apex synced BN")
+            print("=> using apex synced BN")
             self.model = apex.parallel.convert_syncbn_model(self.model)
 
         self.model = self.model.cuda()
@@ -252,63 +249,11 @@ class Trainer:
         return self.optimizer.param_groups[0]['lr']
 
 
-def init_distributed_cuda(args):
-    # pytorch如何能够保证模型的可重复性
-    cudnn.benchmark = True
-    if args.deterministic:
-        cudnn.benchmark = False
-        cudnn.deterministic = True
-        torch.manual_seed(args.local_rank)
-        torch.set_printoptions(precision=10)
-
-    args.distributed = False
-    args.gpu = 0
-    args.world_size = 1
-
-    if 'WORLD_SIZE' in os.environ:
-        args.distributed = int(os.environ['WORLD_SIZE']) > 1
-    print(f"world_size {int(os.environ['WORLD_SIZE'])}\n")
-    print(f"args.distributed {args.distributed}")
-
-    if args.distributed:
-        args.gpu = args.local_rank
-        torch.cuda.set_device(args.gpu)
-        torch.distributed.init_process_group(backend='nccl',
-                                             init_method='env://')
-        args.world_size = torch.distributed.get_world_size()
-
-    assert torch.backends.cudnn.enabled, "Amp requires cudnn backend to be enabled."
-
-    args.lr = args.lr * float(args.batch_size * args.world_size) / 256.
-
-
-if __name__ == "__main__":
-
+def train():
     args = Options().parse()
-    args.dataset = 'xian'
-    args.model = 'FCN'
-    args.backbone = 'resnet50'
-    args.batch_size = 100
-    args.base_size = 256
-    args.crop_size = 256
-    args.optim = "SGD"
-    args.epochs = 1000
-    args.lr = 0.01
-    args.workers = 12
-    args.check_point_id = 1
-    args.experiment_dir_existed = False
-    print(args)
-
-    print("opt_level = {}".format(args.opt_level))
-    print("keep_batchnorm_fp32 = {}".format(args.keep_batchnorm_fp32), type(args.keep_batchnorm_fp32))
-    print("loss_scale = {}".format(args.loss_scale), type(args.loss_scale))
-    print("\nCUDNN VERSION: {}\n".format(torch.backends.cudnn.version()))
-
-    init_distributed_cuda(args)
-
     trainer = Trainer(args)
 
-    print("Start training ==>")
+    print("==> Start training")
     print('Total Epoches:', trainer.epochs)
     print('Starting Epoch:', trainer.start_epoch)
     for epoch in range(trainer.start_epoch, trainer.epochs):
@@ -317,3 +262,6 @@ if __name__ == "__main__":
             new_pred = trainer.validation(epoch)
             trainer.scheduler.step(new_pred)
             trainer.auto_reset_learning_rate()
+
+
+train()

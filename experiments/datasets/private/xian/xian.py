@@ -11,19 +11,19 @@ import torch.utils.data as data
 from PIL import Image
 from torch.utils.data import DataLoader
 
-from experiments.datasets.path import Path
-from experiments.datasets.private.rssrai_tools import mean, std, encode_segmap, decode_segmap
+from ..rssrai_tools.rssrai_utils import mean, std, encode_segmap
+from ...path import Path
 
 
 class Xian(data.Dataset):
     NUM_CLASSES = 10
 
-    def __init__(self, type='train', base_dir=Path.db_root_dir('rssrai')):
+    def __init__(self, mode='train', base_dir=Path.db_root_dir('rssrai')):
 
-        assert type in ['train', 'valid', 'test']
+        assert mode in ['train', 'valid', 'test']
         super().__init__()
         self._base_dir = base_dir
-        self.type = type
+        self.mode = mode
         self.in_c = 4
         self.mean = mean
         self.std = std
@@ -32,7 +32,7 @@ class Xian(data.Dataset):
         self.categories = []
 
         # 加载数据
-        if self.type == 'train':
+        if self.mode == 'train':
             self._label_path_list = glob(os.path.join(self._base_dir, 'split_train', 'label', '*.tif'))
             self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
             self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
@@ -40,7 +40,7 @@ class Xian(data.Dataset):
 
             self.len = len(self._label_path_list)
 
-        if self.type == 'valid':
+        if self.mode == 'valid':
             self._label_path_list = glob(os.path.join(self._base_dir, 'split_valid_256', 'label', '*.tif'))
             self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
             self._image_dir = os.path.join(self._base_dir, 'split_valid_256', 'img')
@@ -56,7 +56,7 @@ class Xian(data.Dataset):
         # return 10
 
     def __str__(self):
-        return 'Rssrai(split=' + str(self.type) + ')'
+        return 'Rssrai(split=' + str(self.mode) + ')'
 
     def get_numpy_image(self, index):
         '''
@@ -65,10 +65,10 @@ class Xian(data.Dataset):
         测试集按顺序选取
         '''
         sample = None
-        if self.type == 'train':
+        if self.mode == 'train':
             sample = self._read_file(self._label_name_list[index])
             sample = self._random_enhance(sample)
-        if self.type == 'valid':
+        if self.mode == 'valid':
             sample = self._read_file(self._label_name_list[index])
             sample = self._valid_enhance(sample)
         return sample
@@ -113,7 +113,7 @@ class Xian(data.Dataset):
 
     def transform(self, sample):
         sample['image'] = torch.from_numpy(sample['image']).permute(2, 0, 1)
-        if self.type != "test":
+        if self.mode != "test":
             sample['label'] = torch.from_numpy(sample['label']).long()
         return sample
 

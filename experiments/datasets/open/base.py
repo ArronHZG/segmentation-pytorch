@@ -22,6 +22,7 @@ class BaseDataset(data.Dataset):
         self.crop_size = crop_size
         self.mean = (0.485, 0.456, 0.406)
         self.std = (0.229, 0.224, 0.225)
+        self.in_c = 3
         # print(f'\nBaseDataset: base_size {base_size}, crop_size {crop_size}')
 
     def __getitem__(self, index):
@@ -54,6 +55,7 @@ class BaseDataset(data.Dataset):
         compose = A.Compose([
             A.PadIfNeeded(self.base_size, self.base_size, p=1),
             # A.RandomSizedCrop((self.crop_size - 10, self.crop_size + 10), self.crop_size, self.crop_size, p=1),
+            A.Resize(self.crop_size+20,self.crop_size+20),
             A.CenterCrop(self.crop_size, self.crop_size, p=1),
             A.HorizontalFlip(),
             A.Blur(p=0.3),

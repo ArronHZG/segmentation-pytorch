@@ -49,6 +49,10 @@ def test_data(dataset_name, **kwargs):
         # plt.show(block=True)
         plt.close('all')
 
+        if index is 10:
+            break
+
 
 if __name__ == '__main__':
-    test_data("pascal_voc")
+    test_data("pascal_voc", split='train', mode='train')
+    test_data("pascal_voc", split='val', mode='val')
