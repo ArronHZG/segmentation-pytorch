@@ -4,11 +4,11 @@ import os
 import torch
 
 
-class Options():
+class Options:
     def __init__(self):
         parser = argparse.ArgumentParser(description='PyTorch \
             Segmentation')
-        # net and dataset
+        # net and datasets
         parser.add_argument('--net', type=str, default='DeepLabV3Plus',
                             help='net name (default: DeepLabV3Plus)')
         parser.add_argument('--backbone', type=str, default='resnet50',
@@ -103,17 +103,6 @@ class Options():
     def parse(self):
         args = self.parser.parse_args()
         # default settings for epochs, batch_size and lr
-        if args.epochs is None:
-            epoches = {
-                'pascal_voc': 50,
-                'pascal_aug': 50,
-                'pcontext': 80,
-                'ade20k': 160,
-                'cityscapes': 180,
-                'rssrai': 100,
-                'rssrai': 100,
-            }
-            args.epochs = epoches[args.dataset.lower()]
         if args.batch_size is None:
             args.batch_size = 4 * torch.cuda.device_count()
         if args.test_batch_size is None:

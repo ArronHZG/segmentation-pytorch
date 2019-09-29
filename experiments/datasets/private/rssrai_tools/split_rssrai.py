@@ -7,7 +7,7 @@ from pprint import pprint
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-from experiments.datasets.mypath import Path
+from experiments.datasets.path import Path
 
 
 def split_image(image_path, image_name, save_path, mode, output_image_h_w=(256, 256)):

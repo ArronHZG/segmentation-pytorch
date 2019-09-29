@@ -1,18 +1,15 @@
 import os
 import random
 from glob import glob
-from pprint import pprint
 
 import albumentations as A
-import matplotlib.pyplot  as plt
 import numpy as np
 import torch
 import torch.utils.data as data
 from PIL import Image
-from torch.utils.data import DataLoader
 
-from experiments.datasets.mypath import Path
-from experiments.datasets.private.rssrai_tools import mean, std, encode_segmap, decode_segmap
+from experiments.datasets.path import Path
+from experiments.datasets.private.rssrai_tools import mean, std, encode_segmap
 
 
 class Rssrai(data.Dataset):
@@ -149,54 +146,6 @@ class Rssrai(data.Dataset):
             sample['label'] = torch.from_numpy(sample['label']).long()
         return sample
 
-
-def testData():
-    plt.rcParams['savefig.dpi'] = 500  # 图片像素
-    plt.rcParams['figure.dpi'] = 500  # 分辨率
-
-    test_path = os.path.join(Path().db_root_dir("rssrai"), "测试输出")
-    if not os.path.exists(test_path):
-        os.makedirs(test_path)
-
-    rssrai = Rssrai(type="train")
-    for i in rssrai:
-        pprint(i["image"].shape)
-        pprint(i["label"].shape)
-        break
-    data_loader = DataLoader(rssrai, batch_size=4, shuffle=True, num_workers=4)
-
-    for ii, sample in enumerate(data_loader):
-        print(sample['image'].shape)
-        sample['image'] = sample['image'][:, 1:, :, :]
-        for jj in range(sample["image"].size()[0]):
-            img = sample['image'].numpy()
-            gt = sample['label'].numpy()
-            img_tmp = np.transpose(img[jj], axes=[1, 2, 0])
-            tmp = gt[jj]
-            segmap = decode_segmap(tmp)
-            img_tmp *= rssrai.std[1:]
-            img_tmp += rssrai.mean[1:]
-            img_tmp *= 255.0
-            img_tmp = img_tmp.astype(np.uint8)
-            plt.figure()
-            plt.title('display')
-            plt.subplot(121)
-            plt.imshow(img_tmp)
-            plt.subplot(122)
-            plt.imshow(segmap)
-            # with open( f"{test_path}/rssrai-{ii}-{jj}.txt", "w" ) as f:
-            #     f.write( str( img_tmp ) )
-            #     f.write( str( tmp ) )
-            #     f.write( str( segmap ) )
-            plt.savefig(f"{test_path}/rssrai-{ii}-{jj}.jpg")
-            plt.close('all')
-
-        if ii == 3:
-            break
-
-    plt.show(block=True)
-
-
 # def test_encode():
 #     from PIL import Image
 #     image = Image.open(
@@ -206,7 +155,3 @@ def testData():
 #     for i in range( image.shape[1] ):
 #         pprint( image[0, i] )
 #         pprint( mask[0, i] )
-
-
-if __name__ == '__main__':
-    testData()

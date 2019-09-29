@@ -11,7 +11,7 @@ import torch.utils.data as data
 from PIL import Image
 from torch.utils.data import DataLoader
 
-from experiments.datasets.mypath import Path
+from experiments.datasets.path import Path
 from experiments.datasets.private.rssrai_tools import mean, std, encode_segmap, decode_segmap
 
 
