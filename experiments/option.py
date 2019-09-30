@@ -32,6 +32,10 @@ class Options:
         parser.add_argument('--lr', type=float, default=None, metavar='LR', help='learning rate (default: auto)')
         parser.add_argument('--lr-scheduler', type=str, default='ReduceLROnPlateau',
                             help='learning rate scheduler (default: ReduceLROnPlateau)')
+
+        # val
+        parser.add_argument('--no-val', action='store_true', default=False)
+
         # apex
         # a Pytorch extension with NVIDIA-maintained utilities to streamline mixed precision and distributed training
         parser.add_argument('--apex', type=int, default=2, choices=[0, 1, 2, 3], help='Automatic Mixed Precision')
@@ -72,7 +76,7 @@ class Options:
     lrs = {
         'coco': 0.01,
         'citys': 0.01,
-        'pascal_voc': 0.0001,
+        'pascal_voc': 0.01,
         'pascal_aug': 0.001,
         'pcontext': 0.001,
         'ade20k': 0.01,
@@ -82,11 +86,11 @@ class Options:
     epoches = {
         'coco': 30,
         'citys': 240,
-        'pascal_voc': 50,
+        'pascal_voc': 500,
         'pascal_aug': 50,
         'pcontext': 80,
         'ade20k': 120,
-        'rssrai': 1000
+        'rssrai': 1000,
     }
 
     def init_distributed_cuda(self, args):

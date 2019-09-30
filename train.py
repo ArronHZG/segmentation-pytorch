@@ -1,4 +1,5 @@
 import os
+import time
 from collections import namedtuple
 
 import torch
@@ -13,8 +14,10 @@ from experiments.datasets.utils import make_data_loader
 from experiments.option import Options
 from experiments.utils.saver import Saver
 from experiments.utils.summaries import TensorboardSummary
+from experiments.utils.tools import AverageMeter
 from foundation import get_model, get_optimizer
 from foundation.blseg.metric import metric
+from progress.bar import Bar as Bar
 
 try:
     import apex
@@ -106,6 +109,7 @@ class Trainer:
             print("=> using apex synced BN")
             self.model = apex.parallel.convert_syncbn_model(self.model)
 
+        print("\n=> apex\n")
         self.model = self.model.cuda()
         self.criterion.cuda()
 
@@ -141,11 +145,20 @@ class Trainer:
         self.train_metric.miou.reset()
         self.train_metric.kappa.reset()
         self.train_metric.pixacc.reset()
-        train_loss = 0.0
-        self.model.train()
-        tbar = tqdm(self.train_loader)
+        batch_time = AverageMeter()
+        data_time = AverageMeter()
+        losses = AverageMeter()
+        end = time.time()
+
         num_img_tr = len(self.train_loader)
-        for i, sample in enumerate(tbar, 0):
+        bar = Bar('Processing', max=num_img_tr)
+
+        self.model.train()
+
+        for batch_idx, sample in enumerate(self.train_loader):
+
+            data_time.update(time.time() - end)
+
             image, target = sample['image'], sample['label']
 
             if self.args.cuda:
@@ -172,72 +185,105 @@ class Trainer:
             #     torch.cuda.empty_cache()
 
             self.optimizer.step()
-            train_loss += loss.item()
-            tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
-            self.summary.writer.add_scalar('total_loss_iter', train_loss / (i + 1), i + num_img_tr * epoch)
+            losses.update(loss.item())
+            self.summary.writer.add_scalar('total_loss_iter', losses.avg,
+                                           batch_idx + num_img_tr * epoch)
 
-        train_loss /= num_img_tr
+            # measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+            # plot progress
+            bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | Acc: {Acc: .4f} | mIoU: {mIoU: .4f}'.format(
+                batch=batch_idx + 1,
+                size=len(self.train_loader),
+                data=data_time.avg,
+                bt=batch_time.avg,
+                total=bar.elapsed_td,
+                eta=bar.eta_td,
+                loss=losses.avg,
+                mIoU=self.train_metric.miou.get(),
+                Acc=self.train_metric.pixacc.get(),
+            )
+            bar.next()
+        bar.finish()
+
         self.summary.writer.add_scalar("learning_rate", self.optimizer.param_groups[0]['lr'], epoch)
-        self.summary.writer.add_scalars('metric/loss_epoch', {"train": train_loss}, epoch)
+        self.summary.writer.add_scalars('metric/loss_epoch', {"train": losses.avg}, epoch)
         self.summary.writer.add_scalars('metric/mIoU', {"train": self.train_metric.miou.get()}, epoch)
         self.summary.writer.add_scalars('metric/Acc', {"train": self.train_metric.pixacc.get()}, epoch)
         self.summary.writer.add_scalars('metric/kappa', {"train": self.train_metric.kappa.get()}, epoch)
 
         print('[Epoch: %d, numImages: %5d]' % (epoch, num_img_tr * self.args.batch_size))
-        print('Loss: %.3f' % train_loss)
+        print('Train Loss: %.3f' % losses.avg)
 
     def validation(self, epoch):
-        self.model.eval()
 
         self.valid_metric.miou.reset()
         self.valid_metric.kappa.reset()
         self.valid_metric.pixacc.reset()
+        batch_time = AverageMeter()
+        data_time = AverageMeter()
+        losses = AverageMeter()
+        end = time.time()
 
-        tbar = tqdm(self.val_loader)
-        num_img_tr = len(tbar)
-        test_loss = 0.0
-        for i, sample in enumerate(tbar):
+        num_img_tr = len(self.val_loader)
+        bar = Bar('Processing', max=num_img_tr)
+
+        self.model.eval()
+
+        for batch_idx, sample in enumerate(self.train_loader):
             image, target = sample['image'], sample['label']
             if self.args.cuda:
                 image, target = image.cuda(), target.cuda()
             with torch.no_grad():
                 output = self.model(image)
             loss = self.criterion(output, target)
-            test_loss += loss.item()
-            tbar.set_description('Test loss: %.3f' % (test_loss / (i + 1)))
+            losses.update(loss.item())
             self.valid_metric.miou.update(output, target)
             self.valid_metric.kappa.update(output, target)
             self.valid_metric.pixacc.update(output, target)
-
             # visualize_batch_image(image,
             #                       target, output, epoch, i,
             #                       self.saver.experiment_dir)
 
-            # Fast test during the training
-            new_pred = self.valid_metric.miou.get()
-            test_loss /= num_img_tr
-            metric_str = "Acc:{:.4f}, mIoU:{:.4f}, kappa: {:.4f}".format(self.valid_metric.pixacc.get(), new_pred,
-                                                                         self.valid_metric.kappa.get())
-            self.summary.writer.add_scalars('metric/loss_epoch', {"valid": test_loss}, epoch)
-            self.summary.writer.add_scalars('metric/mIoU', {"valid": new_pred}, epoch)
-            self.summary.writer.add_scalars('metric/Acc', {"valid": self.valid_metric.pixacc.get()}, epoch)
-            self.summary.writer.add_scalars('metric/kappa', {"valid": self.valid_metric.kappa.get()}, epoch)
-            print('Validation:')
-            print(f"[Epoch: {epoch}, numImages: {num_img_tr * self.args.batch_size}]")
+            # plot progress
+            bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | Acc: {Acc: .4f} | mIoU: {mIoU: .4f}'.format(
+                batch=batch_idx + 1,
+                size=len(self.train_loader),
+                data=data_time.avg,
+                bt=batch_time.avg,
+                total=bar.elapsed_td,
+                eta=bar.eta_td,
+                loss=losses.avg,
+                mIoU=self.valid_metric.miou.get(),
+                Acc=self.valid_metric.pixacc.get(),
+            )
+            bar.next()
+        bar.finish()
 
-            print(metric_str)
-            print(f'Loss: {test_loss:.4f}')
+        # Fast test during the training
+        new_pred = self.valid_metric.miou.get()
+        metric_str = "Acc:{:.4f}, mIoU:{:.4f}, kappa: {:.4f}".format(self.valid_metric.pixacc.get(), new_pred,
+                                                                     self.valid_metric.kappa.get())
+        self.summary.writer.add_scalars('metric/loss_epoch', {"valid": losses.avg}, epoch)
+        self.summary.writer.add_scalars('metric/mIoU', {"valid": new_pred}, epoch)
+        self.summary.writer.add_scalars('metric/Acc', {"valid": self.valid_metric.pixacc.get()}, epoch)
+        self.summary.writer.add_scalars('metric/kappa', {"valid": self.valid_metric.kappa.get()}, epoch)
+        print('Validation:')
+        print(f"[Epoch: {epoch}, numImages: {num_img_tr * self.args.batch_size}]")
+        print(f'Valid Loss: {losses.avg:.4f}')
 
-            is_best = new_pred > self.best_pred
-            self.best_pred = max(new_pred, self.best_pred)
+        is_best = new_pred > self.best_pred
+        self.best_pred = max(new_pred, self.best_pred)
 
-            if args.local_rank is 0:
-                self.saver.save_checkpoint({
-                    'epoch': epoch,
-                    'state_dict': self.model.state_dict(),
-                    'optimizer': self.optimizer.state_dict(),
-                    'best_pred': self.best_pred,
-                }, is_best, metric_str)
+        if self.args.local_rank is 0:
+            self.saver.save_checkpoint({
+                'epoch': epoch,
+                'state_dict': self.model.state_dict(),
+                'optimizer': self.optimizer.state_dict(),
+                'best_pred': self.best_pred,
+            }, is_best, metric_str)
         return new_pred
 
     def auto_reset_learning_rate(self):
