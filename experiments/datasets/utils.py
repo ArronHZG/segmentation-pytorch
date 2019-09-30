@@ -1,7 +1,8 @@
-from .open import VOCSegmentation
-from .private.rssrai_tools import rssrai
-from .private.xian import xian
+from experiments.datasets import VOCSegmentation
 import numpy as np
+
+from experiments.datasets.private.rssrai_tools import rssrai
+from experiments.datasets.private.xian import xian
 
 
 def make_data_loader(dataset_name, base_size, crop_size):
@@ -14,7 +15,7 @@ def make_data_loader(dataset_name, base_size, crop_size):
 
     if dataset_name == 'rssrai':
         train_set = rssrai.Rssrai(mode='train', base_size=base_size, crop_size=crop_size)
-        val_set = rssrai.Rssrai(mode='valid', base_size=base_size, crop_size=crop_size)
+        val_set = rssrai.Rssrai(mode='val', base_size=base_size, crop_size=crop_size)
         num_class = train_set.NUM_CLASSES
 
         return train_set, val_set, num_class
@@ -78,7 +79,24 @@ def get_labels(label_number):
         [128, 192, 0],
         [0, 64, 128]])
 
-    label_colors = {19: label_19, 21: label_21}
+    label_16 = np.array([[0, 200, 0],
+                         [150, 250, 0],
+                         [150, 200, 150],
+                         [200, 0, 200],
+                         [150, 0, 250],
+                         [150, 150, 250],
+                         [250, 200, 0],
+                         [200, 200, 0],
+                         [200, 0, 0],
+                         [250, 0, 150],
+                         [200, 150, 150],
+                         [250, 150, 150],
+                         [0, 0, 200],
+                         [0, 150, 200],
+                         [0, 200, 250],
+                         [0, 0, 0]])
+
+    label_colors = {19: label_19, 21: label_21, 16: label_16}
     return label_colors[label_number]
 
 
