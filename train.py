@@ -7,17 +7,19 @@ import torch.nn.parallel
 import torch.optim
 import torch.utils.data
 import torch.utils.data.distributed
+import numpy as np
+from PIL import Image
+from progress.bar import Bar as Bar
 from torch.utils.data import DataLoader
-from tqdm import tqdm
+import matplotlib.pyplot as plt
 
-from experiments.datasets.utils import make_data_loader
+from experiments.datasets.utils import make_data_loader, decode_segmap
 from experiments.option import Options
 from experiments.utils.saver import Saver
 from experiments.utils.summaries import TensorboardSummary
-from experiments.utils.tools import AverageMeter
+from experiments.utils.tools import AverageMeter, make_sure_path_exists
 from foundation import get_model, get_optimizer
 from foundation.blseg.metric import metric
-from progress.bar import Bar as Bar
 
 try:
     import apex
@@ -50,12 +52,14 @@ class Trainer:
         self.summary = TensorboardSummary(self.saver.experiment_dir)
 
         # Define Dataloader
-        train_set, val_set, self.class_num = make_data_loader(
+        train_set, val_set, self.num_classes = make_data_loader(
             dataset_name=self.args.dataset,
             base_size=self.args.base_size,
             crop_size=self.args.crop_size,
         )
         self.in_c = train_set.in_c
+        self.mean = train_set.mean
+        self.std = train_set.std
 
         train_sampler = None
         val_sampler = None
@@ -81,7 +85,7 @@ class Trainer:
         print(f"=> creating model '{self.args.model}'", end=": ")
         self.model = get_model(model_name=self.args.model,
                                backbone=self.args.backbone,
-                               num_classes=self.class_num,
+                               num_classes=self.num_classes,
                                in_c=self.in_c)
         print('Total params: %.2fM' % (sum(p.numel() for p in self.model.parameters()) / 1000000.0))
 
@@ -132,13 +136,13 @@ class Trainer:
             # delay_allreduce delays all communication to the end of the backward pass.
             self.model = DDP(self.model, delay_allreduce=True)
 
-        self.train_metric = self.Metric(miou=metric.MeanIoU(self.class_num),
+        self.train_metric = self.Metric(miou=metric.MeanIoU(self.num_classes),
                                         pixacc=metric.PixelAccuracy(),
-                                        kappa=metric.Kappa(self.class_num))
+                                        kappa=metric.Kappa(self.num_classes))
 
-        self.valid_metric = self.Metric(miou=metric.MeanIoU(self.class_num),
+        self.valid_metric = self.Metric(miou=metric.MeanIoU(self.num_classes),
                                         pixacc=metric.PixelAccuracy(),
-                                        kappa=metric.Kappa(self.class_num))
+                                        kappa=metric.Kappa(self.num_classes))
 
     def training(self, epoch):
 
@@ -157,9 +161,8 @@ class Trainer:
 
         for batch_idx, sample in enumerate(self.train_loader):
 
-            data_time.update(time.time() - end)
-
             image, target = sample['image'], sample['label']
+            data_time.update(time.time() - end)
 
             if self.args.cuda:
                 image, target = image.cuda(), target.cuda()
@@ -232,8 +235,9 @@ class Trainer:
 
         self.model.eval()
 
-        for batch_idx, sample in enumerate(self.train_loader):
+        for batch_idx, sample in enumerate(self.val_loader):
             image, target = sample['image'], sample['label']
+            data_time.update(time.time() - end)
             if self.args.cuda:
                 image, target = image.cuda(), target.cuda()
             with torch.no_grad():
@@ -243,9 +247,12 @@ class Trainer:
             self.valid_metric.miou.update(output, target)
             self.valid_metric.kappa.update(output, target)
             self.valid_metric.pixacc.update(output, target)
-            # visualize_batch_image(image,
-            #                       target, output, epoch, i,
-            #                       self.saver.experiment_dir)
+
+            self.visualize_batch_image(image, target, output, epoch, batch_idx)
+
+            # measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
 
             # plot progress
             bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | Acc: {Acc: .4f} | mIoU: {mIoU: .4f}'.format(
@@ -293,6 +300,40 @@ class Trainer:
 
     def get_lr(self):
         return self.optimizer.param_groups[0]['lr']
+
+    def visualize_batch_image(self, image, target, output,
+                              epoch, batch_index):
+        # image (B,C,H,W) To (B,H,W,C)
+        image_np = image.cpu().numpy()
+        image_np = np.transpose(image_np, axes=[0, 2, 3, 1])
+        image_np *= self.std
+        image_np += self.mean
+        image_np *= 255.0
+        image_np = image_np.astype(np.uint8)
+
+        # target (B,H,W)
+        target = target.cpu().numpy()
+
+        # output (B,C,H,W) to (B,H,W)
+        output = torch.argmax(output, dim=1).cpu().numpy()
+
+        for i in range(min(3, image_np.shape[0])):
+            img_tmp = image_np[i]
+            img_rgb_tmp = np.array(Image.fromarray(img_tmp).convert("RGB")).astype(np.uint8)
+            target_rgb_tmp = decode_segmap(target[i], self.num_classes).astype(np.uint8)
+            output_rgb_tmp = decode_segmap(output[i], self.num_classes).astype(np.uint8)
+            plt.figure()
+            plt.title('display')
+            plt.subplot(131)
+            plt.imshow(img_rgb_tmp, vmin=0, vmax=255)
+            plt.subplot(132)
+            plt.imshow(target_rgb_tmp, vmin=0, vmax=255)
+            plt.subplot(133)
+            plt.imshow(output_rgb_tmp, vmin=0, vmax=255)
+            path = os.path.join(self.saver.experiment_dir, "vis_image", f'epoch_{epoch}')
+            make_sure_path_exists(path)
+            plt.savefig(f"{path}/{batch_index}-{i}.jpg")
+            plt.close('all')
 
 
 def train():

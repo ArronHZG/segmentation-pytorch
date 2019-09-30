@@ -80,7 +80,7 @@ class Options:
         'pascal_aug': 0.001,
         'pcontext': 0.001,
         'ade20k': 0.01,
-        'rssrai': 0.01,
+        'rssrai': 0.1,
     }
 
     epoches = {
@@ -120,7 +120,7 @@ class Options:
 
         assert torch.backends.cudnn.enabled, "Amp requires cudnn backend to be enabled."
 
-        args.lr = args.lr * float(args.batch_size * args.world_size) / 256.
+        # args.lr = args.lr * float(args.batch_size * args.world_size) / 256.
 
     def parse(self):
         args = self.parser.parse_args()
