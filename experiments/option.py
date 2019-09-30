@@ -76,6 +76,7 @@ class Options:
         'pascal_aug': 0.001,
         'pcontext': 0.001,
         'ade20k': 0.01,
+        'rssrai': 0.01,
     }
 
     epoches = {
@@ -85,6 +86,7 @@ class Options:
         'pascal_aug': 50,
         'pcontext': 80,
         'ade20k': 120,
+        'rssrai': 1000
     }
 
     def init_distributed_cuda(self, args):

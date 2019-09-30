@@ -15,4 +15,5 @@ tqdm
 pillow
 albumentations
 TensorBoardX
+Cython
 pycocotools

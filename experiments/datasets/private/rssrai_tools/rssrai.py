@@ -88,9 +88,9 @@ class Rssrai(data.Dataset):
 
     def _random_crop_and_enhance(self, sample):
         compose = A.Compose([
-            A.PadIfNeeded(self.base_size[0], self.base_size[1], p=1),
+            A.PadIfNeeded(self.base_size, self.base_size, p=1),
             # A.RandomSizedCrop((512,512),self.crop_size[0], self.crop_size[1], p=1),
-            A.RandomCrop(self.crop_size[0], self.crop_size[1], p=1),
+            A.RandomCrop(self.crop_size, self.crop_size, p=1),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.RGBShift(),
