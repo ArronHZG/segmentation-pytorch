@@ -13,7 +13,7 @@ from ...path import Path
 class Rssrai(data.Dataset):
     NUM_CLASSES = 16
 
-    def __init__(self, mode='train', base_size=(512, 512), crop_size=(256, 256), base_dir=Path.db_root_dir('rssrai')):
+    def __init__(self, mode='train', base_size=(520, 520), crop_size=(513, 513), base_dir=Path.db_root_dir('rssrai')):
 
         assert mode in ['train', 'valid', 'test']
         super().__init__()
@@ -32,20 +32,20 @@ class Rssrai(data.Dataset):
         if self.mode == 'train':
             # train_csv = os.path.join(self._base_dir, 'train_set.csv')
             # self._label_name_list = pd.read_csv(train_csv)["文件名"].values.tolist()
-            self._label_path_list = glob(os.path.join(self._base_dir, 'split_train', 'label', '*.tif'))
+            self._label_path_list = glob(os.path.join(self._base_dir, 'split_train_520', 'label', '*.tif'))
             # print(self._label_path_list)
             self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
             # print(self._label_name_list)
-            self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
-            self._label_dir = os.path.join(self._base_dir, 'split_train', 'label')
+            self._image_dir = os.path.join(self._base_dir, 'split_train_520', 'img')
+            self._label_dir = os.path.join(self._base_dir, 'split_train_520', 'label')
 
             self.len = 20000
 
         if self.mode == 'valid':
-            self._label_path_list = glob(os.path.join(self._base_dir, 'split_valid_256', 'label', '*.tif'))
+            self._label_path_list = glob(os.path.join(self._base_dir, 'split_valid_520', 'label', '*.tif'))
             self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
-            self._image_dir = os.path.join(self._base_dir, 'split_valid_256', 'img')
-            self._label_dir = os.path.join(self._base_dir, 'split_valid_256', 'label')
+            self._image_dir = os.path.join(self._base_dir, 'split_valid_520', 'img')
+            self._label_dir = os.path.join(self._base_dir, 'split_valid_520', 'label')
             # self._label_name_list = pd.read_csv( valid_csv )["文件名"].values.tolist()
 
             self.len = len(self._label_name_list)
@@ -151,5 +151,5 @@ class Rssrai(data.Dataset):
 #     image = np.array( image )
 #     mask = encode_segmap( image )
 #     for i in range( image.shape[1] ):
-#         pprint( image[0, i] )
-#         pprint( mask[0, i] )
+#         pprint(image[0, i])
+#         pprint(mask[0, i])
