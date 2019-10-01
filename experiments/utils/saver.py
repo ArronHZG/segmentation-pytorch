@@ -1,5 +1,6 @@
 import glob
 import os
+import random
 from collections import OrderedDict
 
 import torch
@@ -14,6 +15,7 @@ class Saver:
     def __init__(self, args):
         self.args = args
         global run_id
+        time.sleep(random.randint(1, 10))
         self.directory = os.path.join('run', args.dataset, args.model + "-" + args.backbone)
         if None is self.args.check_point_id:
             self.runs = glob.glob(os.path.join(self.directory, 'experiment_*'))

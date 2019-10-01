@@ -8,6 +8,7 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 from experiments.datasets.path import Path
+from experiments.utils.tools import make_sure_path_exists
 
 
 def split_image(image_path, image_name, save_path, mode, output_image_h_w=(520, 520)):
@@ -195,23 +196,21 @@ def test_one_spilt_test_image():
     split_image(image_path, name, save_image_path, mode="CMYK", output_image_h_w=(520, 520))
 
 
-def test_spilt_valid_image():
-    split = "train"
+def spilt_image(split, output_image_h_w):
+    base_path = Path.db_root_dir("rssrai")
     import pandas as pd
-    df = pd.read_csv(f"{split}_set.csv")
+    df = pd.read_csv(os.path.join(base_path, f"{split}_set.csv"))
     label_name_list = df["文件名"].values.tolist()
     print(label_name_list)
 
     base_path = Path.db_root_dir("rssrai")
 
-    save_label_path = os.path.join(base_path, f"split_{split}_520", "label")
-    if not os.path.exists(save_label_path):
-        os.makedirs(save_label_path)
+    save_label_path = os.path.join(base_path, f"split_{split}_{output_image_h_w[0]}", "label")
+    make_sure_path_exists(save_label_path)
     label_path = os.path.join(base_path, "split_train", "label")
 
-    save_image_path = os.path.join(base_path, f"split_{split}_520", "img")
-    if not os.path.exists(save_image_path):
-        os.makedirs(save_image_path)
+    save_image_path = os.path.join(base_path, f"split_{split}_{output_image_h_w[0]}", "img")
+    make_sure_path_exists(save_image_path)
     image_path = os.path.join(base_path, "split_train", "img")
 
     # label_name_list = [path_name.split("/")[-1] for path_name in glob(os.path.join(label_path, "*"))]
@@ -222,8 +221,8 @@ def test_spilt_valid_image():
         image_name = label_name.replace("_label", "")
         # print(image_name)
         # print(label_name)
-        split_image(label_path, label_name, save_label_path, mode="RGB", output_image_h_w=(520, 520))
-        split_image(image_path, image_name, save_image_path, mode="CMYK", output_image_h_w=(520, 520))
+        split_image(label_path, label_name, save_label_path, mode="RGB", output_image_h_w=output_image_h_w)
+        split_image(image_path, image_name, save_image_path, mode="CMYK", output_image_h_w=output_image_h_w)
 
 
 def testOneImage():
@@ -330,5 +329,5 @@ if __name__ == '__main__':
     # print(len(li))
     # test_one_spilt_test_image()
     # test_one_merge_image()
-    test_spilt_valid_image()
+    spilt_image("val", (513, 513))
     # test_merge_images()

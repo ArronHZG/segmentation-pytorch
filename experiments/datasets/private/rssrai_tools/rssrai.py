@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import torch.utils.data as data
 from PIL import Image
-
+import pandas as pd
 from .rssrai_utils import mean, std, encode_segmap
 from ...path import Path
 
@@ -32,24 +32,26 @@ class Rssrai(data.Dataset):
 
         # 加载数据
         if self.mode == 'train':
-            # train_csv = os.path.join(self._base_dir, 'train_set.csv')
-            # self._label_name_list = pd.read_csv(train_csv)["文件名"].values.tolist()
-            self._label_path_list = glob(os.path.join(self._base_dir, 'split_train_520', 'label', '*.tif'))
-            self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
-            self._image_dir = os.path.join(self._base_dir, 'split_train_520', 'img')
-            self._label_dir = os.path.join(self._base_dir, 'split_train_520', 'label')
+            train_csv = os.path.join(self._base_dir, 'train_set.csv')
+            self._label_name_list = pd.read_csv(train_csv)["文件名"].values.tolist()
+            # self._label_path_list = glob(os.path.join(self._base_dir, 'split_train_520', 'label', '*.tif'))
+            # self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
+            self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
+            self._label_dir = os.path.join(self._base_dir, 'split_train', 'label')
+            self.len = 10000
 
         if self.mode == 'val':
-            self._label_path_list = glob(os.path.join(self._base_dir, 'split_valid_520', 'label', '*.tif'))
+            self._label_path_list = glob(os.path.join(self._base_dir, 'split_val_513', 'label', '*.tif'))
             self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
-            self._image_dir = os.path.join(self._base_dir, 'split_valid_520', 'img')
-            self._label_dir = os.path.join(self._base_dir, 'split_valid_520', 'label')
+            self._image_dir = os.path.join(self._base_dir, 'split_val_513', 'img')
+            self._label_dir = os.path.join(self._base_dir, 'split_val_513', 'label')
+            self.len = len(self._label_name_list)
 
     def __getitem__(self, index):
         return self.transform(self.get_numpy_image(index))
 
     def __len__(self):
-        return len(self._label_name_list)
+        return self.len
 
     def __str__(self):
         return f"[Rssrai {self.mode}] num_classes:{self.NUM_CLASSES} len: {self.__len__()}"
@@ -62,7 +64,8 @@ class Rssrai(data.Dataset):
         '''
         sample = None
         if self.mode == 'train':
-            sample = self._read_file(self._label_name_list[index])
+            name = self._get_random_file_name()
+            sample = self._read_file(name)
             sample = self._random_crop_and_enhance(sample)
         if self.mode == 'val':
             sample = self._read_file(self._label_name_list[index])
@@ -72,7 +75,7 @@ class Rssrai(data.Dataset):
     def _random_crop_and_enhance(self, sample):
         compose = A.Compose([
             A.PadIfNeeded(self.base_size, self.base_size, p=1),
-            # A.RandomSizedCrop((512,512),self.crop_size[0], self.crop_size[1], p=1),
+            # A.RandomSizedCrop((self.crop_size-100,self.crop_size+100)),self.crop_size, self.crop_size, p=1),
             A.RandomCrop(self.crop_size, self.crop_size, p=1),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
@@ -85,7 +88,7 @@ class Rssrai(data.Dataset):
 
     def _valid_enhance(self, sample):
         compose = A.Compose([
-            A.PadIfNeeded(self.base_size, self.base_size, p=1),
+            # A.PadIfNeeded(self.base_size, self.base_size, p=1),
             A.CenterCrop(self.crop_size, self.crop_size, p=1),
             A.Normalize(mean=self.mean, std=self.std, p=1)
         ], additional_targets={'image': 'image', 'label': 'mask'})

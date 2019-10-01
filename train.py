@@ -294,7 +294,7 @@ class Trainer:
         return new_pred
 
     def auto_reset_learning_rate(self):
-        if self.optimizer.param_groups[0]['lr'] <= 3e-4:
+        if self.optimizer.param_groups[0]['lr'] <= 1e-4:
             for param_group in self.optimizer.param_groups:
                 param_group['lr'] = self.args.lr
 
