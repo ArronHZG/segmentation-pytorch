@@ -25,7 +25,7 @@ class Options:
         parser.add_argument('--se-loss', action='store_true', default=False, help='Semantic Encoding Loss SE-loss')
         parser.add_argument('--epochs', type=int, default=None, metavar='N', help='default: auto')
         parser.add_argument('--batch-size', type=int, default=64, metavar='N', help='default: auto')
-        parser.add_argument('--test-batch-size', type=int, default=None, metavar='N',
+        parser.add_argument('--val-batch-size', type=int, default=None, metavar='N',
                             help='(default: same as batch size)')
         # optimizer params
         parser.add_argument('--optim', type=str, default="SGD", help='(default: SGD)')
@@ -132,8 +132,8 @@ class Options:
         if args.lr is None:
             args.lr = self.lrs[args.dataset.lower()]
 
-        if args.test_batch_size is None:
-            args.test_batch_size = args.batch_size
+        if args.val_batch_size is None:
+            args.val_batch_size = args.batch_size
 
         # Use CUDA
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_ids

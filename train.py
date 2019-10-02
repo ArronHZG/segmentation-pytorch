@@ -75,7 +75,7 @@ class Trainer:
                                        num_workers=self.args.num_workers,
                                        sampler=train_sampler)
         self.val_loader = DataLoader(val_set,
-                                     batch_size=self.args.batch_size,
+                                     batch_size=self.args.val_batch_size,
                                      shuffle=False,
                                      pin_memory=True,
                                      num_workers=self.args.num_workers,

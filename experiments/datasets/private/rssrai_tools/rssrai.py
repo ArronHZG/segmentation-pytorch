@@ -25,6 +25,7 @@ class Rssrai(data.Dataset):
         self.mean = mean
         self.std = std
         self.crop_size = crop_size
+        self.val_crop_size = 512
         self.base_size = base_size
         self.im_ids = []
         self.images = []
@@ -89,7 +90,7 @@ class Rssrai(data.Dataset):
     def _valid_enhance(self, sample):
         compose = A.Compose([
             # A.PadIfNeeded(self.base_size, self.base_size, p=1),
-            A.CenterCrop(self.crop_size, self.crop_size, p=1),
+            A.CenterCrop(self.val_crop_size, self.val_crop_size, p=1),
             A.Normalize(mean=self.mean, std=self.std, p=1)
         ], additional_targets={'image': 'image', 'label': 'mask'})
         return compose(**sample)
