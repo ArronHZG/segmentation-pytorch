@@ -1,6 +1,7 @@
 import os
 import time
 from collections import namedtuple
+from pprint import pprint
 
 import torch
 import torch.nn.parallel
@@ -93,10 +94,11 @@ class Trainer:
         self.optimizer = get_optimizer(optim_name=self.args.optim, parameters=self.model.parameters(),
                                        lr=self.args.lr)
 
-        if self.args.check_point_id is not None and self.args.experiment_dir_existed is True:
+        if self.args.check_point_id is not None:
             print(f"=> reload  parameter from experiment_{self.args.check_point_id}")
             self.best_pred, self.start_epoch, model_state_dict, optimizer_state_dict = self.saver.load_checkpoint()
-            self.model.load_state_dict(model_state_dict)
+            # pprint(model_state_dict.keys())
+            self.model.load_state_dict(model_state_dict, strict=False)
             self.optimizer.load_state_dict(optimizer_state_dict)
 
         # self.criterion = loss.CrossEntropyLossWithOHEM( 0.7 )
