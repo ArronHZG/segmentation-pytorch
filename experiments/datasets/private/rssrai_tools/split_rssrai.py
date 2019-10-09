@@ -320,14 +320,4 @@ def merge_rssrai_test_label_images(image_path, save_image_path):
 
 if __name__ == '__main__':
     # test_spilt_train_image()
-    # testGetValid()
-    # test_spilt_valid_image()
-    # pass
-    # li = glob('/home/arron/Documents/grey/Project_Rssrai/rssrai/split_valid_520/img/*')
-    # print(len(li))
-    # li = glob('/home/arron/Documents/grey/Project_Rssrai/rssrai/split_valid_520/label/*')
-    # print(len(li))
-    # test_one_spilt_test_image()
-    # test_one_merge_image()
-    spilt_image("val", (513, 513))
-    # test_merge_images()
+    spilt_image("val", (256, 256))

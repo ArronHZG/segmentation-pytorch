@@ -42,10 +42,10 @@ class Rssrai(data.Dataset):
             self.len = 10000
 
         if self.mode == 'val':
-            self._label_path_list = glob(os.path.join(self._base_dir, 'split_val_513', 'label', '*.tif'))
+            self._label_path_list = glob(os.path.join(self._base_dir, 'split_val_256', 'label', '*.tif'))
             self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
-            self._image_dir = os.path.join(self._base_dir, 'split_val_513', 'img')
-            self._label_dir = os.path.join(self._base_dir, 'split_val_513', 'label')
+            self._image_dir = os.path.join(self._base_dir, 'split_val_256', 'img')
+            self._label_dir = os.path.join(self._base_dir, 'split_val_256', 'label')
             self.len = len(self._label_name_list)
 
     def __getitem__(self, index):
@@ -76,8 +76,8 @@ class Rssrai(data.Dataset):
     def _random_crop_and_enhance(self, sample):
         compose = A.Compose([
             A.PadIfNeeded(self.base_size, self.base_size, p=1),
-            # A.RandomSizedCrop((self.crop_size-100,self.crop_size+100)),self.crop_size, self.crop_size, p=1),
-            A.RandomCrop(self.crop_size, self.crop_size, p=1),
+            A.RandomSizedCrop((self.crop_size - 100, self.crop_size + 100), self.crop_size, self.crop_size, p=1),
+            # A.RandomCrop(self.crop_size, self.crop_size, p=1),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.RGBShift(),
@@ -90,7 +90,7 @@ class Rssrai(data.Dataset):
     def _valid_enhance(self, sample):
         compose = A.Compose([
             # A.PadIfNeeded(self.base_size, self.base_size, p=1),
-            A.CenterCrop(self.val_crop_size, self.val_crop_size, p=1),
+            # A.CenterCrop(self.val_crop_size, self.val_crop_size, p=1),
             A.Normalize(mean=self.mean, std=self.std, p=1)
         ], additional_targets={'image': 'image', 'label': 'mask'})
         return compose(**sample)
