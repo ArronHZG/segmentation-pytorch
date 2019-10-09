@@ -7,11 +7,10 @@ from pprint import pprint
 import torch
 from tqdm import tqdm
 
-from foundation import get_model
-from experiments.datasets.mypath import Path
+from experiments.datasets.path import Path
 from experiments.option import Options
-from experiments.datasets.private.rssrai_tools import save_path, RssraiTestOneImage
 from experiments.utils.saver import Saver
+from foundation import get_model
 
 
 class Tester:

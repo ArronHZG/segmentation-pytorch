@@ -6,7 +6,7 @@ import pandas as pd
 from PIL import Image
 from tqdm import tqdm
 
-from experiments.datasets.mypath import Path
+from experiments.datasets.path import Path
 
 from multiprocessing import Pool
 

@@ -3,7 +3,7 @@ import torch
 from tensorboardX import SummaryWriter
 from torchsummary import summary
 
-from experiments.datasets.mypath import Path
+from experiments.datasets.path import Path
 
 
 def show_model(model, model_name, input_zise=(3, 512, 512)):

@@ -7,10 +7,11 @@ from pprint import pprint
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-from experiments.datasets.mypath import Path
+from experiments.datasets.path import Path
+from experiments.utils.tools import make_sure_path_exists
 
 
-def split_image(image_path, image_name, save_path, mode, output_image_h_w=(256, 256)):
+def split_image(image_path, image_name, save_path, mode, output_image_h_w=(520, 520)):
     '''
     读入图片为 H,W,C
     保存图片 (output_image_h_w,output_image_h_w,mode)
@@ -56,6 +57,8 @@ def split_image(image_path, image_name, save_path, mode, output_image_h_w=(256, 
             little_image = np_image[split_image_size[0] * h:split_image_size[0] * (h + 1),
                            -split_image_size[1]:, :]
             assert little_image.shape == split_image_size
+            # print(little_image.shape)
+            # print(split_image_size)
             save_image(little_image, save_path, f'{save_name}_{h}_{w}.{suffix}', mode=mode)
 
     # 保存左下角,三种情况
@@ -63,6 +66,8 @@ def split_image(image_path, image_name, save_path, mode, output_image_h_w=(256, 
         h = np_image_size[0] // output_image_h_w[0]
         w = np_image_size[1] // output_image_h_w[1]
         little_image = np_image[-split_image_size[0]:, -split_image_size[1]:, :]
+        # print(split_image_size)
+        # print(little_image.shape)
         assert little_image.shape == split_image_size
         save_image(little_image, save_path, f'{save_name}_{h}_{w}.{suffix}', mode=mode)
 
@@ -103,7 +108,7 @@ def merge_image(image_path,
                 image_name,
                 save_path,
                 mode,
-                input_image_h_w=(256, 256),
+                input_image_h_w=(520, 520),
                 output_image_h_w=(6800, 7200)):
     assert mode in ["CMYK", "RGB"]
 
@@ -175,41 +180,40 @@ def test_spilt_test_image():
     # 图片
     image_path = os.path.join(base_path, "test")
     image_list = glob(os.path.join(image_path, "*.tif"))
-    save_image_path = os.path.join(base_path, "split_test_256", "img")
-    spilt_all_images(image_list, save_image_path, mode="CMYK", output_image_h_w=(256, 256))
+    save_image_path = os.path.join(base_path, "split_test_520", "img")
+    spilt_all_images(image_list, save_image_path, mode="CMYK", output_image_h_w=(520, 520))
 
 
 def test_one_spilt_test_image():
     base_path = Path.db_root_dir("rssrai")
     image_path = os.path.join(base_path, "test")
     name = 'GF2_PMS1__20150902_L1A0001015646-MSS1.tif'
-    save_image_path = os.path.join(base_path, "split_test_256")
+    save_image_path = os.path.join(base_path, "split_test_520")
     if not os.path.exists(save_image_path):
         os.makedirs(save_image_path)
 
     # 图片
-    split_image(image_path, name, save_image_path, mode="CMYK", output_image_h_w=(256, 256))
+    split_image(image_path, name, save_image_path, mode="CMYK", output_image_h_w=(520, 520))
 
 
-def test_spilt_valid_image():
-    # import pandas as pd
-    # df = pd.read_csv("valid_set.csv")
-    # name_list = df["文件名"].values.tolist()
-    # print(name_list)
+def spilt_image(split, output_image_h_w):
+    base_path = Path.db_root_dir("rssrai")
+    import pandas as pd
+    df = pd.read_csv(os.path.join(base_path, f"{split}_set.csv"))
+    label_name_list = df["文件名"].values.tolist()
+    print(label_name_list)
 
     base_path = Path.db_root_dir("rssrai")
 
-    save_label_path = os.path.join(base_path, "split_valid_256", "label")
-    if not os.path.exists(save_label_path):
-        os.makedirs(save_label_path)
-    label_path = os.path.join(base_path, "split_valid", "label")
+    save_label_path = os.path.join(base_path, f"split_{split}_{output_image_h_w[0]}", "label")
+    make_sure_path_exists(save_label_path)
+    label_path = os.path.join(base_path, "split_train", "label")
 
-    save_image_path = os.path.join(base_path, "split_valid_256", "img")
-    if not os.path.exists(save_image_path):
-        os.makedirs(save_image_path)
-    image_path = os.path.join(base_path, "split_valid", "img")
+    save_image_path = os.path.join(base_path, f"split_{split}_{output_image_h_w[0]}", "img")
+    make_sure_path_exists(save_image_path)
+    image_path = os.path.join(base_path, "split_train", "img")
 
-    label_name_list = [path_name.split("/")[-1] for path_name in glob(os.path.join(label_path, "*"))]
+    # label_name_list = [path_name.split("/")[-1] for path_name in glob(os.path.join(label_path, "*"))]
 
     print(len(label_name_list))
 
@@ -217,8 +221,8 @@ def test_spilt_valid_image():
         image_name = label_name.replace("_label", "")
         # print(image_name)
         # print(label_name)
-        split_image(label_path, label_name, save_label_path, mode="RGB")
-        split_image(image_path, image_name, save_image_path, mode="CMYK")
+        split_image(label_path, label_name, save_label_path, mode="RGB", output_image_h_w=output_image_h_w)
+        split_image(image_path, image_name, save_image_path, mode="CMYK", output_image_h_w=output_image_h_w)
 
 
 def testOneImage():
@@ -275,7 +279,7 @@ def test_one_merge_image():
     base_path = Path.db_root_dir("rssrai")
 
     # 图片
-    image_path = os.path.join(base_path, "split_test_256")
+    image_path = os.path.join(base_path, "split_test_520")
     save_image_path = os.path.join(base_path, "merge_test", "img")
     if not os.path.exists(save_image_path):
         os.makedirs(save_image_path)
@@ -309,7 +313,7 @@ def merge_rssrai_test_label_images(image_path, save_image_path):
     name_list = df['name'].tolist()
     for name in tqdm(name_list):
         merge_image(image_path,
-                    name[:-4]+"_label.tif",
+                    name[:-4] + "_label.tif",
                     save_image_path,
                     "RGB")
 
@@ -319,11 +323,11 @@ if __name__ == '__main__':
     # testGetValid()
     # test_spilt_valid_image()
     # pass
-    # li = glob('/home/arron/Documents/grey/Project_Rssrai/rssrai/split_valid_256/img/*')
+    # li = glob('/home/arron/Documents/grey/Project_Rssrai/rssrai/split_valid_520/img/*')
     # print(len(li))
-    # li = glob('/home/arron/Documents/grey/Project_Rssrai/rssrai/split_valid_256/label/*')
+    # li = glob('/home/arron/Documents/grey/Project_Rssrai/rssrai/split_valid_520/label/*')
     # print(len(li))
     # test_one_spilt_test_image()
     # test_one_merge_image()
-    test_spilt_test_image()
+    spilt_image("val", (513, 513))
     # test_merge_images()

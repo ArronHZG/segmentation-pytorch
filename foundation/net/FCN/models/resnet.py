@@ -11,6 +11,7 @@ class ResNet(nn.Module):
         model = getattr(torchvision_resnet, backbone)(pretrained)
 
         if in_channels != 3:
+            # o = (i +2p - d(k-1) -1)/s +1
             self.layer0 = nn.Sequential(
                 nn.Conv2d(in_channels, 64, 7, stride=2, padding=3, bias=False),
                 nn.BatchNorm2d(64),
