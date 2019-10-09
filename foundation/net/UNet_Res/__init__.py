@@ -1,3 +1,4 @@
+### compute model params
 def count_param(model):
     param_count = 0
     for param in model.parameters():

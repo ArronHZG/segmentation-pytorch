@@ -15,6 +15,6 @@ conda install -c conda-forge jupyter_contrib_nbextensions --yes
 
 ```
 # history
-
+2019-10-9 add U-Net
 2019-9-22 amp distributed
 2019-9-19 auto-reset-lr

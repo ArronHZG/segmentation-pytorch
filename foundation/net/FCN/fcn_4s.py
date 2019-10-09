@@ -45,7 +45,7 @@ class FCN( nn.Module ):
         # Using the modified resNet to get 4 different scales of the tensor,
         # in fact, the last three used in the paper,
         # first reserved for experiment
-        self.backbone = getBackBone( backbone, in_channels, pretrained, )
+        self.backbone = getBackBone( backbone, in_channels, pretrained)
         self.pool1_FCNHead = FCNHead( 256, num_classes )
         self.pool2_FCNHead = FCNHead( 512, num_classes )
         self.pool3_FCNHead = FCNHead( 1024, num_classes )
