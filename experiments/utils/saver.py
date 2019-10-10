@@ -61,6 +61,7 @@ class Saver:
         p['lr_scheduler'] = self.args.lr_scheduler
         p['optim'] = self.args.optim
         p['epoch'] = self.args.epochs
+        p['batch_size'] = self.args.batch_size
         p['base_size'] = self.args.base_size
         p['crop_size'] = self.args.crop_size
 

@@ -273,7 +273,8 @@ class Trainer:
 
         # Fast test during the training
         new_pred = self.valid_metric.miou.get()
-        metric_str = "Acc:{:.4f}, mIoU:{:.4f}, kappa: {:.4f}".format(self.valid_metric.pixacc.get(), new_pred,
+        metric_str = "Acc:{:.4f}, mIoU:{:.4f}, kappa: {:.4f}".format(self.valid_metric.pixacc.get(),
+                                                                     new_pred,
                                                                      self.valid_metric.kappa.get())
         self.summary.writer.add_scalars('metric/loss_epoch', {"valid": losses.avg}, epoch)
         self.summary.writer.add_scalars('metric/mIoU', {"valid": new_pred}, epoch)
@@ -286,13 +287,17 @@ class Trainer:
         is_best = new_pred > self.best_pred
         self.best_pred = max(new_pred, self.best_pred)
 
+        train_metric_str = "Acc:{:.4f}, mIoU:{:.4f}, kappa: {:.4f}".format(self.train_metric.pixacc.get(),
+                                                                           self.train_metric.miou.get(),
+                                                                           self.train_metric.kappa.get())
+        save_message = f"train\t\t{train_metric_str}\t\t val\t\t{metric_str}"
         if self.args.local_rank is 0:
             self.saver.save_checkpoint({
                 'epoch': epoch,
                 'state_dict': self.model.state_dict(),
                 'optimizer': self.optimizer.state_dict(),
                 'best_pred': self.best_pred,
-            }, is_best, metric_str)
+            }, is_best, save_message)
         return new_pred
 
     def auto_reset_learning_rate(self):
