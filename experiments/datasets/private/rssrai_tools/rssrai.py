@@ -91,8 +91,8 @@ class Rssrai(data.Dataset):
             # A.RandomCrop(self.crop_size, self.crop_size, p=1),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
-            # A.RGBShift(),
-            # A.Blur(),
+            A.RGBShift(),
+            A.Blur(),
             A.GaussNoise(),
             A.Normalize(mean=self.mean, std=self.std, p=1)
         ], additional_targets={'image': 'image', 'label': 'mask'})
@@ -138,14 +138,16 @@ class Rssrai(data.Dataset):
                             **sample)
 
     def load_numpy(self, index):
+        i = index
         d = None
-        try:
-            sample = np.load(self.path_list[index])
-            d = {'image': torch.from_numpy(sample['image']), "label": torch.from_numpy(sample['label']).long()}
-        except:
-            print(f"{self.path_list[index]} is bad! auto remove it.")
-            os.remove(self.path_list[index])
-            self.path_list[index] = self.path_list[0]
-            sample = np.load(self.path_list[0])
-            d = {'image': torch.from_numpy(sample['image']), "label": torch.from_numpy(sample['label']).long()}
+        while d is None:
+            try:
+                sample = np.load(self.path_list[i])
+                d = {'image': torch.from_numpy(sample['image']), "label": torch.from_numpy(sample['label']).long()}
+            except:
+                print(f"{self.path_list[i]} is bad! auto remove it.")
+                os.remove(self.path_list[i])
+                k = i
+                i = random.randint(0, i - 1)
+                self.path_list[k] = self.path_list[i]
         return d

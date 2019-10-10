@@ -33,11 +33,13 @@ class Saver:
 
     def save_checkpoint(self, state, is_best, metric, filename='checkpoint.pth'):
         """Saves checkpoint to disk"""
-        with open(os.path.join(self.experiment_dir, 'best_pred.txt'), 'a+') as f:
+        with open(os.path.join(self.experiment_dir, 'train_log.txt'), 'a+') as f:
             f.write(f"[epoch {str(state['epoch']).zfill(3)}] {metric}\n")
         if is_best:
             filename = os.path.join(self.experiment_dir, filename)
             torch.save(state, filename)
+            with open(os.path.join(self.experiment_dir, 'best_log.txt'), 'a+') as f:
+                f.write(f"[epoch {str(state['epoch']).zfill(3)}] {metric}\n")
 
     def load_checkpoint(self):
         # 当你想恢复某一阶段的训练（或者进行测试）时，那么就可以读取之前保存的网络模型参数等。

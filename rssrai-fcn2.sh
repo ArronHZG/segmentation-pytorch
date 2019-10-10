@@ -5,4 +5,4 @@ python  train.py  \
         --batch-size=50  \
         --crop-size=256 \
         --epochs 300 \
-#        --check-point-id=1
+        --check-point-id=1
