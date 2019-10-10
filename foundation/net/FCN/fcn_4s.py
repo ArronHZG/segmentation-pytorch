@@ -55,12 +55,13 @@ class FCN(nn.Module):
         # out = s(in-1)+d(k-1)+1-2p
         # while s = s , d =1, k=2s, p = s/2, we will get out = s*in
         # we need to zoom in 32 times by 2 x 2 x 2 x 4
-        self.up_score2_1 = FCNUpsampling(num_classes, 4, stride=2, padding=1)
-        self.up_score2_2 = FCNUpsampling(num_classes, 4, stride=2, padding=1)
-        self.up_score2_3 = FCNUpsampling(num_classes, 4, stride=2, padding=1)
+        self.up_score2 = FCNUpsampling(num_classes, 4, stride=2, padding=1)
+        # self.up_score2_1 = FCNUpsampling(num_classes, 4, stride=2, padding=1)
+        # self.up_score2_2 = FCNUpsampling(num_classes, 4, stride=2, padding=1)
+        # self.up_score2_3 = FCNUpsampling(num_classes, 4, stride=2, padding=1)
         self.up_score4 = FCNUpsampling(num_classes, 8, stride=4, padding=2)
-        self.up_score8 = FCNUpsampling(num_classes, 16, stride=8, padding=4)
-        self.up_score32 = FCNUpsampling(num_classes, 64, stride=32, padding=16)
+        # self.up_score8 = FCNUpsampling(num_classes, 16, stride=8, padding=4)
+        # self.up_score32 = FCNUpsampling(num_classes, 64, stride=32, padding=16)
 
         self.aux_classifier = aux_classifier
 
@@ -88,13 +89,13 @@ class FCN(nn.Module):
             result["aux"] = self.up_score32(pool4_same_channel)
 
         # merge x and pool3   scaling = 1/16
-        x = self.up_score2_1(pool4_same_channel) + pool3_same_channel
+        x = self.up_score2(pool4_same_channel) + pool3_same_channel
 
         # merge x and pool2  scaling = 1/8
-        x = self.up_score2_2(x) + pool2_same_channel
+        x = self.up_score2(x) + pool2_same_channel
 
         # merge x and pool2  scaling = 1/4
-        x = self.up_score2_3(x) + pool1_same_channel
+        x = self.up_score2(x) + pool1_same_channel
 
         # scaling = 1
         # result["out"] = self.up_score4(x)

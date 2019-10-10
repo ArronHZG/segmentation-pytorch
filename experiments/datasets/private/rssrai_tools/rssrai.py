@@ -15,7 +15,8 @@ from ...path import Path
 class Rssrai(data.Dataset):
     NUM_CLASSES = 16
 
-    def __init__(self, mode='train', base_size=520, crop_size=513, base_dir=Path.db_root_dir('rssrai')):
+    def __init__(self, mode='train', base_size=256, crop_size=256, base_dir=Path.db_root_dir('rssrai'),
+                 is_load_numpy=False):
 
         assert mode in ['train', 'val']
         super().__init__()
@@ -30,16 +31,21 @@ class Rssrai(data.Dataset):
         self.im_ids = []
         self.images = []
         self.categories = []
+        self.is_load_numpy = is_load_numpy
 
         # 加载数据
-        if self.mode == 'train':
+        if self.mode == 'train' and self.is_load_numpy is False:
             train_csv = os.path.join(self._base_dir, 'train_set.csv')
             self._label_name_list = pd.read_csv(train_csv)["文件名"].values.tolist()
             # self._label_path_list = glob(os.path.join(self._base_dir, 'split_train_520', 'label', '*.tif'))
             # self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
             self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
             self._label_dir = os.path.join(self._base_dir, 'split_train', 'label')
-            self.len = 10000
+            self.len = 100000
+
+        if self.mode == 'train' and self.is_load_numpy is True:
+            self.path_list = glob(os.path.join(self._base_dir, f'train_numpy_{self.crop_size}', '*.npz'))
+            self.len = len(self.path_list)
 
         if self.mode == 'val':
             self._label_path_list = glob(os.path.join(self._base_dir, 'split_val_256', 'label', '*.tif'))
@@ -49,7 +55,12 @@ class Rssrai(data.Dataset):
             self.len = len(self._label_name_list)
 
     def __getitem__(self, index):
-        return self.transform(self.get_numpy_image(index))
+        if self.is_load_numpy is False:
+            sample = self.transform(self.get_numpy_image(index))
+            self.save_numpy(sample)
+        else:
+            sample = self.load_numpy(index)
+        return sample
 
     def __len__(self):
         return self.len
@@ -80,8 +91,8 @@ class Rssrai(data.Dataset):
             # A.RandomCrop(self.crop_size, self.crop_size, p=1),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
-            A.RGBShift(),
-            A.Blur(),
+            # A.RGBShift(),
+            # A.Blur(),
             A.GaussNoise(),
             A.Normalize(mean=self.mean, std=self.std, p=1)
         ], additional_targets={'image': 'image', 'label': 'mask'})
@@ -121,3 +132,20 @@ class Rssrai(data.Dataset):
         if self.mode != "test":
             sample['label'] = torch.from_numpy(sample['label']).long()
         return sample
+
+    def save_numpy(self, sample):
+        np.savez_compressed(os.path.join(self._base_dir, f"train_numpy_{self.crop_size}", str(hash(sample["image"]))),
+                            **sample)
+
+    def load_numpy(self, index):
+        d = None
+        try:
+            sample = np.load(self.path_list[index])
+            d = {'image': torch.from_numpy(sample['image']), "label": torch.from_numpy(sample['label']).long()}
+        except:
+            print(f"{self.path_list[index]} is bad! auto remove it.")
+            os.remove(self.path_list[index])
+            self.path_list[index] = self.path_list[0]
+            sample = np.load(self.path_list[0])
+            d = {'image': torch.from_numpy(sample['image']), "label": torch.from_numpy(sample['label']).long()}
+        return d

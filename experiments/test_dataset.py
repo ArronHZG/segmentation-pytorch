@@ -2,6 +2,7 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from experiments.datasets import get_segmentation_dataset
@@ -51,6 +52,20 @@ def test_data(dataset_name, **kwargs):
             break
 
 
+def get_numpy(dataset_name, **kwargs):
+    dataset = get_segmentation_dataset(dataset_name, **kwargs)
+
+    train_loader = DataLoader(dataset,
+                              batch_size=20,
+                              pin_memory=True,
+                              num_workers=8)
+    print(len(train_loader))
+    for sample in tqdm(train_loader):
+        pass
+
+
 if __name__ == '__main__':
-    test_data("rssrai", mode='train')
-    test_data("rssrai", mode='val')
+    # test_data("rssrai", mode='train', is_load_numpy=True)
+    # test_data("rssrai", mode='train')
+    # test_data("rssrai", mode='val')
+    get_numpy("rssrai", mode='train')

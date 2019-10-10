@@ -14,7 +14,7 @@ def make_data_loader(dataset_name, base_size, crop_size):
         return train_set, val_set, num_class
 
     if dataset_name == 'rssrai':
-        train_set = rssrai.Rssrai(mode='train', base_size=base_size, crop_size=crop_size)
+        train_set = rssrai.Rssrai(mode='train', base_size=base_size, crop_size=crop_size, is_load_numpy=True)
         val_set = rssrai.Rssrai(mode='val', base_size=base_size, crop_size=crop_size)
         num_class = train_set.NUM_CLASSES
 

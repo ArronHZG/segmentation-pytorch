@@ -1,8 +1,8 @@
-python   train.py  \
-        --model UNet \
+python  train.py  \
+        --model FCN \
         --dataset rssrai \
         --gpu-ids 0 \
         --batch-size=50  \
-#        --val-batch-size=25 \
         --crop-size=256 \
-        --check-point-id=5
+        --epochs 300 \
+#        --check-point-id=1
