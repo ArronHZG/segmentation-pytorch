@@ -150,7 +150,5 @@ class Rssrai(data.Dataset):
             except:
                 print(f"{self.path_list[i]} is bad! auto remove it.")
                 os.remove(self.path_list[i])
-                k = i
-                i = random.randint(0, i - 1)
-                self.path_list[k] = self.path_list[i]
+                self.path_list[i] = self.path_list[0]
         return d
