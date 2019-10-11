@@ -45,7 +45,7 @@ class Rssrai(data.Dataset):
             # self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
             self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
             self._label_dir = os.path.join(self._base_dir, 'split_train', 'label')
-            self.len = 100000
+            self.len = 30000
 
         if self.mode == 'train' and self.is_load_numpy is True:
             self.path_list = glob(os.path.join(self._base_dir, f'train_numpy_{self.crop_size}', '*.npz'))
@@ -59,8 +59,8 @@ class Rssrai(data.Dataset):
             self.len = len(self._label_name_list)
 
     def __getitem__(self, index):
-        if self.is_load_numpy is False:
-            sample = self.transform(self.get_numpy_image(index))
+        sample = self.transform(self.get_numpy_image(index))
+        if self.mode == 'train' and self.is_load_numpy is False:
             self.save_numpy(sample)
         else:
             sample = self.load_numpy(index)
