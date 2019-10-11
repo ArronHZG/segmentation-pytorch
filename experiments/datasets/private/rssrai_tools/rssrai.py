@@ -59,10 +59,10 @@ class Rssrai(data.Dataset):
             self.len = len(self._label_name_list)
 
     def __getitem__(self, index):
-        sample = self.transform(self.get_numpy_image(index))
-        if self.mode == 'train' and self.is_load_numpy is False:
-            self.save_numpy(sample)
-        else:
+        if (self.mode is 'train' and self.is_load_numpy is False) or self.mode is 'val':
+            sample = self.transform(self.get_numpy_image(index))
+            self.save_numpy(sample, index)
+        if self.mode is 'train' and self.is_load_numpy is True:
             sample = self.load_numpy(index)
         return sample
 
@@ -137,8 +137,8 @@ class Rssrai(data.Dataset):
             sample['label'] = torch.from_numpy(sample['label']).long()
         return sample
 
-    def save_numpy(self, sample):
-        np.savez_compressed(os.path.join(self.numpy_path, str(hash(sample["image"]))), **sample)
+    def save_numpy(self, sample, index):
+        np.savez_compressed(os.path.join(self.numpy_path, f"{index}".zfill(5)), **sample)
 
     def load_numpy(self, index):
         i = index
