@@ -8,6 +8,8 @@ import torch
 import torch.utils.data as data
 from PIL import Image
 import pandas as pd
+
+from experiments.utils.tools import make_sure_path_exists
 from .rssrai_utils import mean, std, encode_segmap
 from ...path import Path
 
@@ -32,6 +34,8 @@ class Rssrai(data.Dataset):
         self.images = []
         self.categories = []
         self.is_load_numpy = is_load_numpy
+        self.numpy_path = os.path.join(self._base_dir, f"train_numpy_{self.crop_size}")
+        make_sure_path_exists(self.numpy_path)
 
         # 加载数据
         if self.mode == 'train' and self.is_load_numpy is False:
@@ -134,8 +138,7 @@ class Rssrai(data.Dataset):
         return sample
 
     def save_numpy(self, sample):
-        np.savez_compressed(os.path.join(self._base_dir, f"train_numpy_{self.crop_size}", str(hash(sample["image"]))),
-                            **sample)
+        np.savez_compressed(os.path.join(self.numpy_path, str(hash(sample["image"]))), **sample)
 
     def load_numpy(self, index):
         i = index

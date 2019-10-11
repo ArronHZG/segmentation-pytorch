@@ -3,12 +3,12 @@ from torch.optim import SGD, Adam, ASGD
 from foundation.blseg.model import PSPNet
 from foundation.net.DeepLabV3Plus.deeplab_v3plus import DeepLabV3Plus
 from foundation.net.FCN.fcn_4s import FCN
-from foundation.net.UNet.UNet import UNet
+from foundation.net.UNet.UNet import UNet, UNet_Nested
 from foundation.optimizer.radam import RAdam
 
 
 def get_model(model_name, backbone, num_classes, in_c):
-    assert model_name in ['DeepLabV3Plus', 'PSPNet', 'FCN', 'UNet']
+    assert model_name in ['DeepLabV3Plus', 'PSPNet', 'FCN', 'UNet','UNet_Nested']
     if model_name == 'DeepLabV3Plus':
         return DeepLabV3Plus(num_classes, in_channels=in_c, backbone=backbone, pretrained=True)
     if model_name == 'PSPNet':
@@ -17,6 +17,8 @@ def get_model(model_name, backbone, num_classes, in_c):
         return FCN(num_classes, in_channels=in_c, backbone=backbone, pretrained=True)
     if model_name == 'UNet':
         return UNet(num_classes, in_c)
+    if model_name == 'UNet_Nested':
+        return UNet_Nested(num_classes, in_c)
 
     raise NotImplementedError
 

@@ -62,6 +62,8 @@ def get_numpy(dataset_name, **kwargs):
     print(len(train_loader))
     for sample in tqdm(train_loader):
         pass
+    for sample in tqdm(train_loader):
+        pass
 
 
 if __name__ == '__main__':
