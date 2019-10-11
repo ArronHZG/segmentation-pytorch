@@ -6,7 +6,7 @@ gluonnlp
 torch
 torchvision
 torchsummary
-tensorflow-gpu==2.0.0-rc1
+tensorflow-gpu==2.0.0
 scipy
 matplotlib
 pandas
