@@ -1,26 +1,25 @@
 import os
 import time
 from collections import namedtuple
-from pprint import pprint
 
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn.parallel
 import torch.optim
 import torch.utils.data
 import torch.utils.data.distributed
-import numpy as np
 from PIL import Image
 from progress.bar import Bar as Bar
 from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
 
 from experiments.datasets.utils import make_data_loader, decode_segmap
 from experiments.option import Options
 from experiments.utils.saver import Saver
 from experiments.utils.summaries import TensorboardSummary
-from experiments.utils.tools import AverageMeter, make_sure_path_exists
+from experiments.utils.tools import make_sure_path_exists
 from foundation import get_model, get_optimizer
-from foundation.blseg.metric import metric
+from foundation.metric import MeanIoU, PixelAccuracy, Kappa, AverageMeter
 
 try:
     import apex
@@ -43,7 +42,7 @@ class Trainer:
 
         self.best_pred = 0
 
-        self.Metric = namedtuple('Metric', 'pixacc miou kappa')
+        self.Metric = namedtuple('Metric', 'pixacc miou kappa batch_time data_time total_time loss lr')
 
         # Define Saver
         self.saver = Saver(args)
@@ -138,33 +137,43 @@ class Trainer:
             # delay_allreduce delays all communication to the end of the backward pass.
             self.model = DDP(self.model, delay_allreduce=True)
 
-        self.train_metric = self.Metric(miou=metric.MeanIoU(self.num_classes),
-                                        pixacc=metric.PixelAccuracy(),
-                                        kappa=metric.Kappa(self.num_classes))
+        self.train_message = self.Metric(miou=MeanIoU(self.num_classes),
+                                         pixacc=PixelAccuracy(),
+                                         kappa=Kappa(self.num_classes),
+                                         batch_time=AverageMeter(),
+                                         data_time=AverageMeter(),
+                                         loss=AverageMeter(),
+                                         lr=self.args.lr,
+                                         total_time=0)
 
-        self.valid_metric = self.Metric(miou=metric.MeanIoU(self.num_classes),
-                                        pixacc=metric.PixelAccuracy(),
-                                        kappa=metric.Kappa(self.num_classes))
+        self.val_message = self.Metric(miou=MeanIoU(self.num_classes),
+                                       pixacc=PixelAccuracy(),
+                                       kappa=Kappa(self.num_classes),
+                                       batch_time=AverageMeter(),
+                                       data_time=AverageMeter(),
+                                       loss=AverageMeter(),
+                                       lr=self.args.lr,
+                                       total_time=0)
 
     def training(self, epoch):
 
-        self.train_metric.miou.reset()
-        self.train_metric.kappa.reset()
-        self.train_metric.pixacc.reset()
-        batch_time = AverageMeter()
-        data_time = AverageMeter()
-        losses = AverageMeter()
-        end = time.time()
+        self.train_message.miou.reset()
+        self.train_message.pixacc.reset()
+        self.train_message.kappa.reset()
+        self.train_message.batch_time.reset()
+        self.train_message.data_time.reset()
+        self.train_message.loss.reset()
 
-        num_img_tr = len(self.train_loader)
-        bar = Bar('Processing', max=num_img_tr)
-
+        batch_num = len(self.train_loader)
+        bar = Bar('train', max=batch_num)
         self.model.train()
 
+        epoch_start_time = time.time()
+        batch_start_time = time.time()
         for batch_idx, sample in enumerate(self.train_loader):
 
             image, target = sample['image'], sample['label']
-            data_time.update(time.time() - end)
+            self.train_message.data_time.update(time.time() - batch_start_time)
 
             if self.args.cuda:
                 image, target = image.cuda(), target.cuda()
@@ -175,9 +184,10 @@ class Trainer:
 
             loss = self.criterion(output, target)
 
-            self.train_metric.miou.update(output, target)
-            self.train_metric.kappa.update(output, target)
-            self.train_metric.pixacc.update(output, target)
+            self.train_message.miou.update(output, target)
+            self.train_message.kappa.update(output, target)
+            self.train_message.pixacc.update(output, target)
+            self.train_message.loss.update(loss.item())
 
             if self.args.apex:
                 from apex import amp
@@ -190,107 +200,116 @@ class Trainer:
             #     torch.cuda.empty_cache()
 
             self.optimizer.step()
-            losses.update(loss.item())
-            self.summary.writer.add_scalar('total_loss_iter', losses.avg,
-                                           batch_idx + num_img_tr * epoch)
+            self.summary.writer.add_scalar('total_loss_iter', self.train_message.loss.avg,
+                                           batch_idx + batch_num * epoch)
 
             # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
+            self.train_message.batch_time.update(time.time() - batch_start_time)
+            batch_start_time = time.time()
 
             # plot progress
-            bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | Acc: {Acc: .4f} | mIoU: {mIoU: .4f}'.format(
+            bar.suffix = '[{epoch}]\t({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | lr: {lr:.4f} | Loss: {loss:.4f} | Acc: {Acc: .4f} | mIoU: {mIoU: .4f}'.format(
+                epoch=epoch,
                 batch=batch_idx + 1,
-                size=len(self.train_loader),
-                data=data_time.avg,
-                bt=batch_time.avg,
+                size=batch_num,
+                data=self.train_message.data_time.avg,
+                bt=self.train_message.batch_time.avg,
                 total=bar.elapsed_td,
                 eta=bar.eta_td,
-                loss=losses.avg,
-                mIoU=self.train_metric.miou.get(),
-                Acc=self.train_metric.pixacc.get(),
+                lr=self.train_message.lr,
+                loss=self.train_message.loss.avg,
+                mIoU=self.train_message.miou.get(),
+                Acc=self.train_message.pixacc.get(),
             )
             bar.next()
         bar.finish()
 
-        self.summary.writer.add_scalar("learning_rate", self.optimizer.param_groups[0]['lr'], epoch)
-        self.summary.writer.add_scalars('metric/loss_epoch', {"train": losses.avg}, epoch)
-        self.summary.writer.add_scalars('metric/mIoU', {"train": self.train_metric.miou.get()}, epoch)
-        self.summary.writer.add_scalars('metric/Acc', {"train": self.train_metric.pixacc.get()}, epoch)
-        self.summary.writer.add_scalars('metric/kappa', {"train": self.train_metric.kappa.get()}, epoch)
+        # calculate total time
+        self.train_message.total_time = time.time() - epoch_start_time
+        # get lr
+        self.train_message.lr = self.optimizer.param_groups[0]['lr']
 
-        print('[Epoch: %d, numImages: %5d]' % (epoch, num_img_tr * self.args.batch_size))
-        print('Train Loss: %.3f' % losses.avg)
+        self.summary.writer.add_scalar("learning_rate", self.train_message.lr, epoch)
+        self.summary.writer.add_scalars('metric/loss_epoch', {"train": self.train_message.loss.avg}, epoch)
+        self.summary.writer.add_scalars('metric/mIoU', {"train": self.train_message.miou.get()}, epoch)
+        self.summary.writer.add_scalars('metric/Acc', {"train": self.train_message.pixacc.get()}, epoch)
+        self.summary.writer.add_scalars('metric/kappa', {"train": self.train_message.kappa.get()}, epoch)
+
+        # print('[Epoch: %d, numImages: %5d]' % (epoch, batch_num * self.args.batch_size))
 
     def validation(self, epoch):
 
-        self.valid_metric.miou.reset()
-        self.valid_metric.kappa.reset()
-        self.valid_metric.pixacc.reset()
-        batch_time = AverageMeter()
-        data_time = AverageMeter()
-        losses = AverageMeter()
-        end = time.time()
+        self.val_message.miou.reset()
+        self.val_message.kappa.reset()
+        self.val_message.pixacc.reset()
+        self.train_message.batch_time.reset()
+        self.val_message.data_time.reset()
+        self.val_message.loss.reset()
 
-        num_img_tr = len(self.val_loader)
-        bar = Bar('Processing', max=num_img_tr)
-
+        batch_num = len(self.val_loader)
+        bar = Bar('val', max=batch_num)
         self.model.eval()
 
+        epoch_start_time = time.time()
+        batch_start_time = time.time()
         for batch_idx, sample in enumerate(self.val_loader):
+
             image, target = sample['image'], sample['label']
-            data_time.update(time.time() - end)
+            self.val_message.data_time.update(time.time() - batch_start_time)
+
             if self.args.cuda:
                 image, target = image.cuda(), target.cuda()
+
             with torch.no_grad():
                 output = self.model(image)
+
             loss = self.criterion(output, target)
-            losses.update(loss.item())
-            self.valid_metric.miou.update(output, target)
-            self.valid_metric.kappa.update(output, target)
-            self.valid_metric.pixacc.update(output, target)
+
+            self.val_message.miou.update(output, target)
+            self.val_message.kappa.update(output, target)
+            self.val_message.pixacc.update(output, target)
+            self.val_message.loss.update(loss.item())
 
             self.visualize_batch_image(image, target, output, epoch, batch_idx)
 
             # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
+            self.train_message.batch_time.update(time.time() - batch_start_time)
+            batch_start_time = time.time()
 
             # plot progress
-            bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | Acc: {Acc: .4f} | mIoU: {mIoU: .4f}'.format(
+            bar.suffix = '[{epoch}]\t({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | Acc: {Acc: .4f} | mIoU: {mIoU: .4f}'.format(
+                epoch=epoch,
                 batch=batch_idx + 1,
-                size=len(self.train_loader),
-                data=data_time.avg,
-                bt=batch_time.avg,
+                size=batch_num,
+                data=self.val_message.data_time.avg,
+                bt=self.val_message.batch_time.avg,
                 total=bar.elapsed_td,
                 eta=bar.eta_td,
-                loss=losses.avg,
-                mIoU=self.valid_metric.miou.get(),
-                Acc=self.valid_metric.pixacc.get(),
+                loss=self.val_message.loss.avg,
+                mIoU=self.val_message.miou.get(),
+                Acc=self.val_message.pixacc.get(),
             )
             bar.next()
         bar.finish()
 
-        # Fast test during the training
-        new_pred = self.valid_metric.miou.get()
-        metric_str = "Acc:{:.4f}, mIoU:{:.4f}, kappa: {:.4f}".format(self.valid_metric.pixacc.get(),
-                                                                     new_pred,
-                                                                     self.valid_metric.kappa.get())
-        self.summary.writer.add_scalars('metric/loss_epoch', {"valid": losses.avg}, epoch)
-        self.summary.writer.add_scalars('metric/mIoU', {"valid": new_pred}, epoch)
-        self.summary.writer.add_scalars('metric/Acc', {"valid": self.valid_metric.pixacc.get()}, epoch)
-        self.summary.writer.add_scalars('metric/kappa', {"valid": self.valid_metric.kappa.get()}, epoch)
-        print('Validation:')
-        print(f"[Epoch: {epoch}, numImages: {num_img_tr * self.args.batch_size}]")
-        print(f'Valid Loss: {losses.avg:.4f}')
+        # calculate total time
+        self.train_message.total_time = time.time() - epoch_start_time
 
+        # Fast test during the training
+        new_pred = self.val_message.miou.get()
         is_best = new_pred > self.best_pred
         self.best_pred = max(new_pred, self.best_pred)
 
-        train_metric_str = "Acc:{:.4f}, mIoU:{:.4f}, kappa: {:.4f}".format(self.train_metric.pixacc.get(),
-                                                                           self.train_metric.miou.get(),
-                                                                           self.train_metric.kappa.get())
-        save_message = f"train\t\t{train_metric_str}\t\t val\t\t{metric_str}"
+        self.summary.writer.add_scalars('metric/loss_epoch', {"valid": self.val_message.loss.avg}, epoch)
+        self.summary.writer.add_scalars('metric/mIoU', {"valid": new_pred}, epoch)
+        self.summary.writer.add_scalars('metric/Acc', {"valid": self.val_message.pixacc.get()}, epoch)
+        self.summary.writer.add_scalars('metric/kappa', {"valid": self.val_message.kappa.get()}, epoch)
+        # print('Validation:')
+        # print(f"[Epoch: {epoch}, numImages: {batch_num * self.args.batch_size}]")
+        # print(f'Valid Loss: {self.valid_message.loss.avg:.4f}')
+
+        save_message = f"train\t{self.message_str('train')}\t val\t{self.message_str('val')}"
+
         if self.args.local_rank is 0:
             self.saver.save_checkpoint({
                 'epoch': epoch,
@@ -341,6 +360,21 @@ class Trainer:
             make_sure_path_exists(path)
             plt.savefig(f"{path}/{batch_index}-{i}.jpg")
             plt.close('all')
+
+    def message_str(self, model):
+        message = None
+
+        if model is "train":
+            message = self.train_message
+        elif model is "val":
+            message = self.val_message
+
+        return f"total_time: {message.total_time:.4f}, " + \
+               f"lr: {message.lr:.4f}, " + \
+               f"loss: {message.loss.avg:.4f}, " + \
+               f"acc: {message.pixacc.get():.4f}, " + \
+               f"mIoU: {message.miou.get():.4f}, " + \
+               f"kappa: {message.kappa.get():.4f}"
 
 
 def train():

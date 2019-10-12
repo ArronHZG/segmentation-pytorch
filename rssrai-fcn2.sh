@@ -4,5 +4,5 @@ python  train.py  \
         --gpu-ids 0 \
         --batch-size=50  \
         --crop-size=256 \
-        --epochs 300 \
-#        --check-point-id=1
+        --epochs 3000 \
+        --check-point-id=1

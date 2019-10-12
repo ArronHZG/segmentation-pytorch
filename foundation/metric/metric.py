@@ -1,5 +1,5 @@
-import torch
 import numpy as np
+import torch
 
 
 class PixelAccuracy:
@@ -102,6 +102,24 @@ class Kappa:
         self.tar_vec = np.zeros(self.num)
 
 
+class AverageMeter:
+    def __init__(self):
+        self.count = 0
+        self.sum = 0
+
+    def reset(self):
+        self.count = 0
+        self.sum = 0
+
+    def update(self, val, n=1):
+        self.sum += val * n
+        self.count += n
+
+    @property
+    def avg(self):
+        return self.sum / self.count
+
+
 def testKappa():
     out = torch.randn(2, 16, 256, 256).cuda()
     tar = torch.randint(16, (2, 256, 256)).cuda()
@@ -113,12 +131,18 @@ def testKappa():
     mean.update(out, tar)
     print(mean.get())
 
-
-    acc =PixelAccuracy()
-    acc.update(out,tar)
+    acc = PixelAccuracy()
+    acc.update(out, tar)
     print(acc.get())
 
 
+def testAvg():
+    a = AverageMeter()
+    for i in range(1,3):
+        a.update(i)
+    print(a.avg)
+
 
 if __name__ == '__main__':
-    testKappa()
+    testAvg()
+
