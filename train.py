@@ -1,6 +1,5 @@
 import os
 import time
-from collections import namedtuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,6 +30,12 @@ except ImportError:
     raise ImportError("Please install apex from https://www.github.com/nvidia/apex to run this example.")
 
 
+class Message:
+    def __init__(self, **kwargs):
+        for item in kwargs.items():
+            setattr(self, item[0], item[1])
+
+
 class Trainer:
 
     def __init__(self, args):
@@ -42,14 +47,12 @@ class Trainer:
 
         self.best_pred = 0
 
-        self.Metric = namedtuple('Metric', 'pixacc miou kappa batch_time data_time total_time loss lr')
-
         # Define Saver
         self.saver = Saver(args)
         self.saver.save_experiment_config()
 
         # Define Tensorboard Summary
-        self.summary = TensorboardSummary(self.saver.experiment_dir)
+        self.summary = TensorboardSummary(make_sure_path_exists(os.path.join(self.saver.experiment_dir, "tensorboard")))
 
         # Define Dataloader
         train_set, val_set, self.num_classes = make_data_loader(
@@ -137,23 +140,23 @@ class Trainer:
             # delay_allreduce delays all communication to the end of the backward pass.
             self.model = DDP(self.model, delay_allreduce=True)
 
-        self.train_message = self.Metric(miou=MeanIoU(self.num_classes),
-                                         pixacc=PixelAccuracy(),
-                                         kappa=Kappa(self.num_classes),
-                                         batch_time=AverageMeter(),
-                                         data_time=AverageMeter(),
-                                         loss=AverageMeter(),
-                                         lr=self.args.lr,
-                                         total_time=0)
+        self.train_message = Message(miou=MeanIoU(self.num_classes),
+                                     pixacc=PixelAccuracy(),
+                                     kappa=Kappa(self.num_classes),
+                                     batch_time=AverageMeter(),
+                                     data_time=AverageMeter(),
+                                     loss=AverageMeter(),
+                                     lr=self.args.lr,
+                                     total_time=0)
 
-        self.val_message = self.Metric(miou=MeanIoU(self.num_classes),
-                                       pixacc=PixelAccuracy(),
-                                       kappa=Kappa(self.num_classes),
-                                       batch_time=AverageMeter(),
-                                       data_time=AverageMeter(),
-                                       loss=AverageMeter(),
-                                       lr=self.args.lr,
-                                       total_time=0)
+        self.val_message = Message(miou=MeanIoU(self.num_classes),
+                                   pixacc=PixelAccuracy(),
+                                   kappa=Kappa(self.num_classes),
+                                   batch_time=AverageMeter(),
+                                   data_time=AverageMeter(),
+                                   loss=AverageMeter(),
+                                   lr=self.args.lr,
+                                   total_time=0)
 
     def training(self, epoch):
 
@@ -208,7 +211,7 @@ class Trainer:
             batch_start_time = time.time()
 
             # plot progress
-            bar.suffix = '[{epoch}]\t({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | lr: {lr:.4f} | Loss: {loss:.4f} | Acc: {Acc: .4f} | mIoU: {mIoU: .4f}'.format(
+            bar.suffix = '[{epoch}]({batch}/{size}) lr: {lr:.4f} | Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | Acc: {Acc: .4f} | mIoU: {mIoU: .4f}'.format(
                 epoch=epoch,
                 batch=batch_idx + 1,
                 size=batch_num,
@@ -247,7 +250,7 @@ class Trainer:
         self.val_message.loss.reset()
 
         batch_num = len(self.val_loader)
-        bar = Bar('val', max=batch_num)
+        bar = Bar('valid', max=batch_num)
         self.model.eval()
 
         epoch_start_time = time.time()
@@ -273,11 +276,11 @@ class Trainer:
             self.visualize_batch_image(image, target, output, epoch, batch_idx)
 
             # measure elapsed time
-            self.train_message.batch_time.update(time.time() - batch_start_time)
+            self.val_message.batch_time.update(time.time() - batch_start_time)
             batch_start_time = time.time()
 
             # plot progress
-            bar.suffix = '[{epoch}]\t({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | Acc: {Acc: .4f} | mIoU: {mIoU: .4f}'.format(
+            bar.suffix = '[{epoch}]({batch}/{size}) lr: {lr:.4f} | Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | Acc: {Acc: .4f} | mIoU: {mIoU: .4f}'.format(
                 epoch=epoch,
                 batch=batch_idx + 1,
                 size=batch_num,
@@ -285,6 +288,7 @@ class Trainer:
                 bt=self.val_message.batch_time.avg,
                 total=bar.elapsed_td,
                 eta=bar.eta_td,
+                lr=self.train_message.lr,
                 loss=self.val_message.loss.avg,
                 mIoU=self.val_message.miou.get(),
                 Acc=self.val_message.pixacc.get(),
