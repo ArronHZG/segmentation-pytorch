@@ -155,7 +155,6 @@ class Trainer:
                                    batch_time=AverageMeter(),
                                    data_time=AverageMeter(),
                                    loss=AverageMeter(),
-                                   lr=self.args.lr,
                                    total_time=0)
 
     def training(self, epoch):
@@ -373,8 +372,8 @@ class Trainer:
         elif model is "val":
             message = self.val_message
 
-        return f"total_time: {message.total_time:.4f}, " + \
-               f"lr: {message.lr:.4f}, " + \
+        return f"lr: {message.lr:.4f}, " + \
+               f"total_time: {message.total_time:.4f}, " + \
                f"loss: {message.loss.avg:.4f}, " + \
                f"acc: {message.pixacc.get():.4f}, " + \
                f"mIoU: {message.miou.get():.4f}, " + \
