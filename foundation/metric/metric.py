@@ -1,3 +1,5 @@
+import functools
+
 import numpy as np
 import torch
 
@@ -58,11 +60,15 @@ class MeanIoU:
             self.num_union[cur_cls] += union.item()
 
     def get(self, ignore_background=False):
+        item_list = self.get_item(ignore_background=ignore_background)
+        return np.array(item_list).mean().item()
+
+    @functools.lru_cache()
+    def get_item(self, ignore_background=False):
         if ignore_background:
-            return (self.num_intersection[1:] /
-                    (self.num_union[1:] + self.eps)).mean()
+            return list(self.num_intersection[1:] / (self.num_union[1:] + self.eps))
         else:
-            return (self.num_intersection / (self.num_union + self.eps)).mean()
+            return list(self.num_intersection / (self.num_union + self.eps))
 
     def reset(self):
         self.num_intersection = np.zeros(self.num_classes)
