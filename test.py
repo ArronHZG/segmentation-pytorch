@@ -8,6 +8,7 @@ import torch
 from tqdm import tqdm
 
 from experiments.datasets.path import Path
+from experiments.datasets.private.rssrai_tools.rssrai_test import RssraiTestOneImage, save_path
 from experiments.option import Options
 from experiments.utils.saver import Saver
 from foundation import get_model
@@ -15,7 +16,7 @@ from foundation import get_model
 
 class Tester:
 
-    def __init__(self):
+    def __init__(self, args):
         self.args = args
         self.saver = Saver(args)
         self.best_pred = 0
@@ -23,7 +24,8 @@ class Tester:
         self.model = None
 
     def test(self, image_name, image_dir, save_dir):
-        rssraiImage = RssraiTestOneImage(image_name, image_dir, save_dir, self.args.batch_size, self.args.workers)
+
+        rssraiImage = RssraiTestOneImage(image_name, image_dir, save_dir, self.args.batch_size, self.args.num_workers)
 
         # Define network
         self.model = get_model(model_name=self.args.model,
@@ -75,20 +77,14 @@ class Tester:
 if __name__ == "__main__":
     args = Options().parse()
 
-    args.dataset = 'rssrai'
-    args.model = 'FCN'
-    args.backbone = 'resnet50'
-    args.check_point_id = 1
-    args.batch_size = 500
-
     print(args)
     now = f"{time.localtime(time.time()).tm_year}-{time.localtime(time.time()).tm_mon}-{time.localtime(time.time()).tm_mday}-"
     now += f"{time.localtime(time.time()).tm_hour}-{time.localtime(time.time()).tm_min}-{time.localtime(time.time()).tm_sec}"
-    tester = Tester()
+    tester = Tester(args)
 
     base_dir = Path.db_root_dir('rssrai')
     image_dir = os.path.join(base_dir, 'train', 'img')
-    save_dir = save_path(os.path.join(base_dir, f'test_output_model={args.model}_time={now}'))
+    save_dir = save_path(os.path.join(tester.saver.experiment_dir, f'test_output_model={args.model}_time={now}'))
 
     _img_path_list = glob(os.path.join(image_dir, '*.tif'))
     img_name_list = [name.split('/')[-1] for name in _img_path_list]
