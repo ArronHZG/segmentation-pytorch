@@ -1,12 +1,8 @@
 progress
 numpy
-mxnet-cu100mkl
-gluoncv
-gluonnlp
 torch
 torchvision
 torchsummary
-tensorflow-gpu==2.0.0
 scipy
 matplotlib
 pandas

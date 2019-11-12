@@ -1,5 +1,7 @@
-import torch
+import functools
+
 import numpy as np
+import torch
 
 
 class PixelAccuracy:
@@ -58,11 +60,15 @@ class MeanIoU:
             self.num_union[cur_cls] += union.item()
 
     def get(self, ignore_background=False):
+        item_list = self.get_item(ignore_background=ignore_background)
+        return np.array(item_list).mean().item()
+
+    @functools.lru_cache()
+    def get_item(self, ignore_background=False):
         if ignore_background:
-            return (self.num_intersection[1:] /
-                    (self.num_union[1:] + self.eps)).mean()
+            return list(self.num_intersection[1:] / (self.num_union[1:] + self.eps))
         else:
-            return (self.num_intersection / (self.num_union + self.eps)).mean()
+            return list(self.num_intersection / (self.num_union + self.eps))
 
     def reset(self):
         self.num_intersection = np.zeros(self.num_classes)
@@ -102,6 +108,24 @@ class Kappa:
         self.tar_vec = np.zeros(self.num)
 
 
+class AverageMeter:
+    def __init__(self):
+        self.count = 0
+        self.sum = 0
+
+    def reset(self):
+        self.count = 0
+        self.sum = 0
+
+    def update(self, val, n=1):
+        self.sum += val * n
+        self.count += n
+
+    @property
+    def avg(self):
+        return self.sum / self.count
+
+
 def testKappa():
     out = torch.randn(2, 16, 256, 256).cuda()
     tar = torch.randint(16, (2, 256, 256)).cuda()
@@ -113,12 +137,18 @@ def testKappa():
     mean.update(out, tar)
     print(mean.get())
 
-
-    acc =PixelAccuracy()
-    acc.update(out,tar)
+    acc = PixelAccuracy()
+    acc.update(out, tar)
     print(acc.get())
 
 
+def testAvg():
+    a = AverageMeter()
+    for i in range(1,3):
+        a.update(i)
+    print(a.avg)
+
 
 if __name__ == '__main__':
-    testKappa()
+    testAvg()
+

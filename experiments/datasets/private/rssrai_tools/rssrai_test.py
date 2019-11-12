@@ -12,7 +12,7 @@ from PIL import Image
 from torch.utils.data import DataLoader
 
 from experiments.datasets.path import Path
-from experiments.datasets.private.rssrai_tools import mean, std, color_list
+from experiments.datasets.private.rssrai_tools.rssrai_utils import mean, std, color_list
 
 
 class RssraiTestOneImage:
@@ -131,7 +131,7 @@ class RssraiTestOneImage:
         for i in range(l):
             # print(self.output_image[sample["x1"][i]:sample["x2"][i], sample["y1"][i]:sample["y2"][i], :].shape)
             # print(sample['image'][i].permute(1,2,0).shape)
-            self.output_image[sample["x1"][i]:sample["x2"][i], sample["y1"][i]:sample["y2"][i], :] = \
+            self.output_image[sample["x1"][i]:sample["x2"][i], sample["y1"][i]:sample["y2"][i], :] += \
                 sample['image'][i]
         del sample["x1"]
         del sample["x2"]
@@ -152,7 +152,7 @@ class RssraiTestOneImage:
         # print(output.size())
         image = np.argmax(self.output_image, axis=2)
         image = self.decode_segmap(image)
-        image = Image.fromarray(image.astype('uint8'))
+        image = Image.fromarray(image.astype(np.uint8))
         image.save(os.path.join(self.save_path, f"{self.image_name[:-4]}_label.tif"))
 
 
@@ -245,6 +245,10 @@ def testFlip():
 
     rssraiImage.saveResultRGBImage()
 
+
+
+def testFilp():
+    np.zeros((5,5))
 
 if __name__ == '__main__':
     testFlip()
