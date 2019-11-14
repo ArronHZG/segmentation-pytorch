@@ -396,3 +396,14 @@ def train():
 
 
 train()
+
+
+def predict_valid():
+    pass
+
+
+if __name__ == '__main__':
+    print("#################################################################")
+    # predict_train()
+    predict_valid()
+    print("Done")
