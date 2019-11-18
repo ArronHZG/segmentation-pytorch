@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 from experiments.datasets.path import Path
-from experiments.utils.tools import make_sure_path_exists
+from experiments.utils.iotools import make_sure_path_exists
 
 
 def split_image(image_path, image_name, save_path, mode, output_image_h_w=(520, 520)):

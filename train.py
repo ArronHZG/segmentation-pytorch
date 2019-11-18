@@ -16,7 +16,7 @@ from experiments.datasets.utils import make_data_loader, decode_segmap
 from experiments.option import Options
 from experiments.utils.saver import Saver
 from experiments.utils.summaries import TensorboardSummary
-from experiments.utils.tools import make_sure_path_exists
+from experiments.utils.iotools import make_sure_path_exists
 from foundation import get_model, get_optimizer
 from foundation.metric import MeanIoU, PixelAccuracy, Kappa, AverageMeter
 

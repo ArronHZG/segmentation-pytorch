@@ -8,7 +8,7 @@ from tqdm import tqdm
 from experiments.datasets import get_segmentation_dataset
 from experiments.datasets.path import Path
 from experiments.datasets.utils import decode_segmap
-from experiments.utils.tools import make_sure_path_exists
+from experiments.utils.iotools import make_sure_path_exists
 
 # np.set_printoptions(threshold=np.inf)
 

@@ -9,7 +9,7 @@ import torch.utils.data as data
 from PIL import Image
 import pandas as pd
 
-from experiments.utils.tools import make_sure_path_exists
+from experiments.utils.iotools import make_sure_path_exists
 from .rssrai_utils import mean, std, encode_segmap
 from ...path import Path
 

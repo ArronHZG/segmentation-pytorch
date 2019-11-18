@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 import torch
 
-from experiments.utils.tools import make_sure_path_exists
+from experiments.utils.iotools import make_sure_path_exists
 
 run_id = None
 
