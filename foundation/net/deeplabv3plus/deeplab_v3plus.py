@@ -12,7 +12,7 @@ class DeepLabV3Plus(nn.Module):
     def __init__(self, num_classes, in_channels=3, backbone='xception', pretrained=True,
                  output_stride=16, freeze_bn=False, **_):
         super(DeepLabV3Plus, self).__init__()
-        assert ('xception' or 'resnet' in backbone)
+        assert (backbone is 'xception' or 'resnet')
         self.backbone, low_level_channels = getBackBone(backbone, in_channels=in_channels, output_stride=output_stride,
                                                         pretrained=pretrained)
 

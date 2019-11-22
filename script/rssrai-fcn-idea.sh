@@ -1,5 +1,5 @@
 python  ../train.py  \
-        --model FCN_Idea \
+        --model fcn-idea \
         --dataset rssrai \
         --gpu-ids 2 \
         --batch-size=80 \

@@ -52,7 +52,8 @@ class Trainer:
         self.saver.save_experiment_config()
 
         # Define Tensorboard Summary
-        self.summary = TensorboardSummary(make_sure_path_exists(os.path.join(self.saver.experiment_dir, "tensorboard")))
+        make_sure_path_exists(os.path.join(self.saver.experiment_dir, "tensorboard"))
+        self.summary = TensorboardSummary(os.path.join(self.saver.experiment_dir, "tensorboard"))
 
         # Define Dataloader
         train_set, val_set, self.num_classes = make_data_loader(
@@ -90,12 +91,11 @@ class Trainer:
         self.model = get_model(model_name=self.args.model,
                                backbone=self.args.backbone,
                                num_classes=self.num_classes,
-                               in_c=self.in_c)
+                               in_c=self.in_c).cuda()
 
         print('Total params: %.2fM' % (sum(p.numel() for p in self.model.parameters()) / 1000000.0))
 
         print(f"=> creating optimizer '{self.args.optim}'")
-
         self.optimizer = get_optimizer(optim_name=self.args.optim, parameters=self.model.parameters(),
                                        lr=self.args.lr)
 
@@ -110,7 +110,7 @@ class Trainer:
 
         # self.criterion = loss.CrossEntropyLossWithOHEM( 0.7 )
         print(f"=> creating criterion 'CrossEntropyLoss'")
-        self.criterion = torch.nn.CrossEntropyLoss(ignore_index=255)
+        self.criterion = torch.nn.CrossEntropyLoss(ignore_index=255).cuda()
 
         print(f"=> creating scheduler 'ReduceLROnPlateau'")
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'max',
@@ -122,16 +122,16 @@ class Trainer:
             print("=> using apex synced BN")
             self.model = apex.parallel.convert_syncbn_model(self.model)
 
-        print("\n=> apex\n")
-        self.model = self.model.cuda()
-        self.criterion.cuda()
-
+        print("=> using apex")
         # Initialize Amp.  Amp accepts either values or strings for the optional override arguments,
         # for convenient interoperation with argparse.
         self.model, self.optimizer = amp.initialize(self.model, self.optimizer,
                                                     opt_level=self.args.opt_level,
                                                     keep_batchnorm_fp32=self.args.keep_batchnorm_fp32,
                                                     loss_scale=self.args.loss_scale)
+
+
+
 
         # For distributed training, wrap the model with apex.parallel.DistributedDataParallel.
         # This must be done AFTER the call to amp.initialize.  If model = DDP(model) is called
@@ -371,13 +371,15 @@ class Trainer:
 
     def message_str(self, model):
         message = None
+        string = ''
 
         if model is "train":
             message = self.train_message
+            string = f"lr: {message.lr:.4f}, "
         elif model is "val":
             message = self.val_message
 
-        return f"lr: {message.lr:.4f}, " + \
+        return string + \
                f"total_time: {message.total_time:.4f}, " + \
                f"loss: {message.loss.avg:.4f}, " + \
                f"acc: {message.pixacc.get():.4f}, " + \

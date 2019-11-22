@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from PIL import Image
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
+# from tensorboardX import SummaryWriter
 
 
 def save_image(np_image, path, name, mode):
@@ -52,7 +53,7 @@ def save_test_image(self, name_list, output):
 class TensorboardSummary:
     def __init__(self, directory):
         self.directory = directory
-        self.writer = SummaryWriter(logdir=os.path.join(self.directory))
+        self.writer = SummaryWriter(self.directory)
 
         # self.output_label_path = os.path.join(self.directory, "test_output")
         # if not os.path.exists(self.output_label_path):

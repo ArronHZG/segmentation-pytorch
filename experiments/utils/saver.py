@@ -64,6 +64,6 @@ class Saver:
         for key, val in p.items():
             log_file.write(key + ':' + str(val) + '\n')
         log_file.write(f"\n\n{'=' * 20}\n")
-        log_file.write(self.args)
+        log_file.write(str(self.args))
         log_file.write(f"\n")
         log_file.close()
