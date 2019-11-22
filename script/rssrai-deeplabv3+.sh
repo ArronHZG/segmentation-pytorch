@@ -1,4 +1,4 @@
-python  train.py  \
+python  ../train.py  \
         --model FCN \
         --dataset deeplabv3plus \
         --gpu-ids 0 \
