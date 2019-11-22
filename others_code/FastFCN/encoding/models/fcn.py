@@ -35,7 +35,7 @@ class FCN(BaseNet):
 
     Examples
     --------
-    >>> model = FCN(nclass=21, backbone='resnet50')
+    >>> model = fcn(nclass=21, backbone='resnet50')
     >>> print(model)
     """
     def __init__(self, nclass, backbone, aux=True, se_loss=False, norm_layer=nn.BatchNorm2d, **kwargs):
@@ -74,7 +74,7 @@ class FCNHead(nn.Module):
 
 def get_fcn(dataset='pascal_voc', backbone='resnet50', pretrained=False,
             root='~/.encoding/models', **kwargs):
-    r"""FCN model from the paper `"Fully Convolutional Network for semantic segmentation"
+    r"""fcn model from the paper `"Fully Convolutional Network for semantic segmentation"
     <https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf>`_
     Parameters
     ----------

@@ -2,9 +2,8 @@ import argparse
 import os
 from pprint import pprint
 
-import torch.backends.cudnn as cudnn
-
 import torch
+import torch.backends.cudnn as cudnn
 
 
 class Options:
@@ -38,15 +37,15 @@ class Options:
 
         # apex
         # a Pytorch extension with NVIDIA-maintained utilities to streamline mixed precision and distributed training
-        parser.add_argument('--apex', type=int, default=2, choices=[0, 1, 2, 3], help='Automatic Mixed Precision')
+        parser.add_argument('--apex', type=int, default=1, choices=[0, 1, 2, 3], help='Automatic Mixed Precision')
         parser.add_argument('--keep-batchnorm-fp32', type=str, default=None)
         parser.add_argument('--loss-scale', type=str, default=None)
+        parser.add_argument('--sync_bn', action='store_true', default=True, help='enabling apex sync BN.')
 
         # cuda
         parser.add_argument('--gpu-ids', type=str, required=True)
-        parser.add_argument('--deterministic', action='store_false')
+        parser.add_argument('--deterministic', action='store_false', default=False)
         parser.add_argument("--local_rank", default=0, type=int)
-        parser.add_argument('--sync_bn', action='store_true', help='enabling apex sync BN.')
 
         # # finetuning pre-trained net
         # parser.add_argument('--ft', action='store_true', default= False,
@@ -90,7 +89,7 @@ class Options:
         'pascal_aug': 50,
         'pcontext': 80,
         'ade20k': 120,
-        'rssrai': 1000,
+        'rssrai': 500,
     }
 
     def init_distributed_cuda(self, args):

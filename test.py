@@ -8,7 +8,7 @@ import torch
 from tqdm import tqdm
 
 from experiments.datasets.path import Path
-from experiments.datasets.private.rssrai_tools.rssrai_test import RssraiTestOneImage, save_path
+from experiments.datasets.private.rssrai.rssrai_test import RssraiTestOneImage, save_path
 from experiments.option import Options
 from experiments.utils.saver import Saver
 from foundation import get_model

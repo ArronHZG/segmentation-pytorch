@@ -1,7 +1,6 @@
 import torch
-from torch import nn
 import torch.nn.functional as F
-from ...backbone.utils import conv3x3
+from torch import nn
 
 
 class PPM(nn.Module):

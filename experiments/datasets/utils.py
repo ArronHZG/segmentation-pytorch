@@ -1,7 +1,7 @@
 from experiments.datasets import VOCSegmentation
 import numpy as np
 
-from experiments.datasets.private.rssrai_tools import rssrai
+from experiments.datasets.private.rssrai import rssrai
 from experiments.datasets.private.xian import xian
 
 

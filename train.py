@@ -14,9 +14,9 @@ from torch.utils.data import DataLoader
 
 from experiments.datasets.utils import make_data_loader, decode_segmap
 from experiments.option import Options
+from experiments.utils.iotools import make_sure_path_exists
 from experiments.utils.saver import Saver
 from experiments.utils.summaries import TensorboardSummary
-from experiments.utils.iotools import make_sure_path_exists
 from foundation import get_model, get_optimizer
 from foundation.metric import MeanIoU, PixelAccuracy, Kappa, AverageMeter
 
@@ -77,6 +77,7 @@ class Trainer:
                                        pin_memory=True,
                                        num_workers=self.args.num_workers,
                                        sampler=train_sampler)
+
         self.val_loader = DataLoader(val_set,
                                      batch_size=self.args.val_batch_size,
                                      shuffle=False,
@@ -90,18 +91,22 @@ class Trainer:
                                backbone=self.args.backbone,
                                num_classes=self.num_classes,
                                in_c=self.in_c)
+
         print('Total params: %.2fM' % (sum(p.numel() for p in self.model.parameters()) / 1000000.0))
 
         print(f"=> creating optimizer '{self.args.optim}'")
+
         self.optimizer = get_optimizer(optim_name=self.args.optim, parameters=self.model.parameters(),
                                        lr=self.args.lr)
 
         if self.args.check_point_id is not None:
             print(f"=> reload  parameter from experiment_{self.args.check_point_id}")
-            self.best_pred, self.start_epoch, model_state_dict, optimizer_state_dict = self.saver.load_checkpoint()
-            # pprint(model_state_dict.keys())
-            self.model.load_state_dict(model_state_dict, strict=False)
-            self.optimizer.load_state_dict(optimizer_state_dict)
+            checkpoint = self.saver.load_checkpoint()
+            self.best_pred = checkpoint['best_pred']
+            self.start_epoch = checkpoint['epoch'] + 1
+            self.model.load_state_dict(checkpoint['state_dict'], strict=False)
+            self.optimizer.load_state_dict(checkpoint['optimizer'])
+            amp.load_state_dict(checkpoint['amp'])
 
         # self.criterion = loss.CrossEntropyLossWithOHEM( 0.7 )
         print(f"=> creating criterion 'CrossEntropyLoss'")
@@ -126,8 +131,7 @@ class Trainer:
         self.model, self.optimizer = amp.initialize(self.model, self.optimizer,
                                                     opt_level=self.args.opt_level,
                                                     keep_batchnorm_fp32=self.args.keep_batchnorm_fp32,
-                                                    loss_scale=self.args.loss_scale
-                                                    )
+                                                    loss_scale=self.args.loss_scale)
 
         # For distributed training, wrap the model with apex.parallel.DistributedDataParallel.
         # This must be done AFTER the call to amp.initialize.  If model = DDP(model) is called
@@ -319,6 +323,7 @@ class Trainer:
                 'state_dict': self.model.state_dict(),
                 'optimizer': self.optimizer.state_dict(),
                 'best_pred': self.best_pred,
+                'amp': amp.state_dict()
             }, is_best, save_message)
         return new_pred
 
@@ -395,15 +400,5 @@ def train():
             trainer.auto_reset_learning_rate()
 
 
-train()
-
-
-def predict_valid():
-    pass
-
-
 if __name__ == '__main__':
-    print("#################################################################")
-    # predict_train()
-    predict_valid()
-    print("Done")
+    train()

@@ -5,7 +5,7 @@ from .open.pascal_voc import VOCSegmentation
 from .open.pascal_aug import VOCAugSegmentation
 from .open.pcontext import ContextSegmentation
 from .open.cityscapes import CitySegmentation
-from .private.rssrai_tools.rssrai import Rssrai
+from .private.rssrai.rssrai import Rssrai
 
 
 datasets = {

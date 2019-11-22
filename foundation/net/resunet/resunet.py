@@ -1,13 +1,13 @@
-import torch.nn as nn
 import torch
-from . import torchvision_resnet
-from .unet_utils import initialize_weights
+import torch.nn as nn
 import torch.nn.functional as F
 
-BACKBONE = 'resnet50'
+from . import torchvision_resnet
+from .unet_utils import initialize_weights
+
 
 class ResDown(nn.Module):
-    def __init__(self, backbone=BACKBONE, in_channels=3, pretrained=True,
+    def __init__(self, backbone, in_channels=3, pretrained=True,
                  zero_init_residual=False):
         super(ResDown, self).__init__()
         model = getattr(torchvision_resnet, backbone)(pretrained)
@@ -54,10 +54,11 @@ class ResDown(nn.Module):
 
 class Double_conv(nn.Module):
     '''(conv => BN => ReLU) * 2'''
-    def __init__(self, inplanes, planes):
+
+    def __init__(self, in_planes, planes):
         super(Double_conv, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(inplanes, planes, 3, padding=1),
+            nn.Conv2d(in_planes, planes, 3, padding=1),
             nn.BatchNorm2d(planes),
             nn.ReLU(inplace=True),
             nn.Conv2d(planes, planes, 3, padding=1),
@@ -68,47 +69,48 @@ class Double_conv(nn.Module):
         x = self.conv(x)
         return x
 
+
 class Up(nn.Module):
-    def __init__(self, inplanes, planes, bilinear=False):
+    def __init__(self, in_planes, planes, bilinear=False):
         super(Up, self).__init__()
         if bilinear:
             self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
         else:
-            self.up = nn.ConvTranspose2d(inplanes//2, inplanes//2, 2, stride=2)
-        self.conv = Double_conv(inplanes, planes)
-    
+            self.up = nn.ConvTranspose2d(in_planes // 2, in_planes // 2, 2, stride=2)
+        self.conv = Double_conv(in_planes, planes)
+
     def forward(self, x1, x2):
         x1 = self.up(x1)
         # print(x1.shape, x2.shape)
-        
+
         # input is CHW
         diffY = x2.size()[2] - x1.size()[2]
         diffX = x2.size()[3] - x1.size()[3]
 
-        x1 = F.pad(x1, (diffX // 2, diffX - diffX//2,
-                        diffY // 2, diffY - diffY//2))
+        x1 = F.pad(x1, (diffX // 2, diffX - diffX // 2, diffY // 2, diffY - diffY // 2))
 
         x = torch.cat([x2, x1], dim=1)
         x = self.conv(x)
         return x
 
-class ResUnet(nn.Module):
-    def __init__(self,inplanes, num_classes):
-        super(ResUnet, self).__init__()
-        self.down = ResDown(in_channels=inplanes)
 
-        if BACKBONE == 'resnet18' or BACKBONE == 'resnet34':
+class ResUNet(nn.Module):
+    def __init__(self, num_classes, in_channels, backbone, pretrained):
+        super(ResUNet, self).__init__()
+        self.down = ResDown(backbone, in_channels=in_channels, pretrained=pretrained)
+
+        if backbone == 'resnet18' or backbone == 'resnet34':
             self.up1 = Up(768, 256)
             self.up2 = Up(384, 128)
             self.up3 = Up(192, 64)
             self.up4 = Up(128, 64)
-            self.outconv = nn.Conv2d(64, num_classes, 1)
+            self.out_conv = nn.Conv2d(64, num_classes, 1)
         else:
             self.up1 = Up(3072, 256)
             self.up2 = Up(768, 128)
             self.up3 = Up(384, 64)
             self.up4 = Up(128, 64)
-            self.outconv = nn.Conv2d(64, num_classes, 1)
+            self.out_conv = nn.Conv2d(64, num_classes, 1)
 
     def forward(self, x):
         self.x0, self.x1, self.x2, self.x3, self.x4 = self.down(x)
@@ -116,6 +118,5 @@ class ResUnet(nn.Module):
         x = self.up2(x, self.x2)
         x = self.up3(x, self.x1)
         x = self.up4(x, self.x0)
-
-        x = self.outconv(x)
+        x = self.out_conv(x)
         return x

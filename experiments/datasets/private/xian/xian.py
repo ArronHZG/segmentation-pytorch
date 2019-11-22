@@ -11,7 +11,7 @@ import torch.utils.data as data
 from PIL import Image
 from torch.utils.data import DataLoader
 
-from ..rssrai_tools.rssrai_utils import mean, std, encode_segmap
+from ..rssrai.rssrai_utils import mean, std, encode_segmap
 from ...path import Path
 
 

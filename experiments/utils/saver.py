@@ -1,28 +1,21 @@
 import glob
 import os
-import random
-import time
 from collections import OrderedDict
 
 import torch
 
 from experiments.utils.iotools import make_sure_path_exists
 
-run_id = None
-
 
 class Saver:
 
     def __init__(self, args):
         self.args = args
-        global run_id
-        time.sleep(random.randint(1, 10))
         self.directory = os.path.join('run', args.dataset, args.model + "-" + args.backbone)
         if None is self.args.check_point_id:
             self.runs = glob.glob(os.path.join(self.directory, 'experiment_*'))
-            if run_id is None:
-                run_ids = sorted([int(experiment.split('_')[-1]) for experiment in self.runs]) if self.runs else [0]
-                run_id = run_ids[-1] + 1
+            run_ids = sorted([int(experiment.split('_')[-1]) for experiment in self.runs]) if self.runs else [0]
+            run_id = run_ids[-1] + 1
             self.experiment_dir = os.path.join(self.directory, 'experiment_{}'.format(str(run_id)))
             make_sure_path_exists(self.experiment_dir)
         else:
@@ -52,11 +45,7 @@ class Saver:
                 checkpoint = torch.load(os.path.join(self.experiment_dir, 'reality_checkpoint.pth'))
         except Exception:
             raise RuntimeError("checkpoint doesn't exist.")
-        state_dict = checkpoint['state_dict']
-        optimizer = checkpoint['optimizer']
-        best_pred = checkpoint['best_pred']
-        start_epoch = checkpoint['epoch'] + 1
-        return best_pred, start_epoch, state_dict, optimizer
+        return checkpoint
 
     def save_experiment_config(self):
         logfile = os.path.join(self.experiment_dir, 'parameters.txt')
@@ -74,4 +63,7 @@ class Saver:
 
         for key, val in p.items():
             log_file.write(key + ':' + str(val) + '\n')
+        log_file.write(f"\n\n{'=' * 20}\n")
+        log_file.write(self.args)
+        log_file.write(f"\n")
         log_file.close()

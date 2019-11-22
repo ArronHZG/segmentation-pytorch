@@ -1,1 +1,0 @@
-python train.py --model FCN --dataset pascal_voc --gpu-ids 0 --batch-size=32 --base-size=480 --crop-size=320

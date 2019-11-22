@@ -1,6 +1,5 @@
 from itertools import chain
 
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -46,13 +45,3 @@ class DeepLabV3Plus(nn.Module):
     def freeze_bn(self):
         for module in self.modules():
             if isinstance(module, nn.BatchNorm2d): module.eval()
-
-
-if __name__ == '__main__':
-    m,_ = getBackBone("xception", output_stride=8, pretrained=False)
-    print(m)
-    x = torch.rand((1, 3, 256, 256))
-    print(x.shape)
-    a, b = m(x)
-    print(a.shape)
-    print(b.shape)

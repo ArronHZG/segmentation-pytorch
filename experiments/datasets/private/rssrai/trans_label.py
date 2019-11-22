@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 from experiments.datasets.path import Path
-from experiments.datasets.private.rssrai_tools.rssrai_utils import encode_segmap
+from experiments.datasets.private.rssrai.rssrai_utils import encode_segmap
 
 np.set_printoptions(threshold=sys.maxsize)
 

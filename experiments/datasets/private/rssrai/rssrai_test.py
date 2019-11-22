@@ -12,7 +12,7 @@ from PIL import Image
 from torch.utils.data import DataLoader
 
 from experiments.datasets.path import Path
-from experiments.datasets.private.rssrai_tools.rssrai_utils import mean, std, color_list
+from experiments.datasets.private.rssrai.rssrai_utils import mean, std, color_list
 
 
 class RssraiTestOneImage:
