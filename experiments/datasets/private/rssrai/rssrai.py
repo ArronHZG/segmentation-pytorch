@@ -3,7 +3,6 @@ from glob import glob
 
 import albumentations as A
 import numpy as np
-import pandas as pd
 import torch
 import torch.utils.data as data
 from PIL import Image
@@ -18,6 +17,7 @@ def read_csv(path):
         lines = read.readlines()
     name_list = [x.split('\n')[0] for x in lines]
     return name_list
+
 
 class Rssrai(data.Dataset):
     NUM_CLASSES = 16
@@ -139,5 +139,5 @@ class Rssrai(data.Dataset):
 
     def load_numpy(self, index):
         sample = np.load(self.path_list[index])
-        d = {'image': torch.from_numpy(sample['image']), "label": torch.from_numpy(sample['label']).long()}
-        return d
+        return {'image': torch.from_numpy(sample['image']).permute(2, 0, 1),
+                "label": torch.from_numpy(sample['label']).long()}
