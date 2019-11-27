@@ -1,4 +1,4 @@
-python  ../train.py  \
+python  ../train.py \
         --model fcn-idea \
         --dataset rssrai \
         --gpu-ids 0 \

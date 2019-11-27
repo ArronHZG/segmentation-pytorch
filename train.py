@@ -280,7 +280,7 @@ class Trainer:
             self.val_message.pixacc.update(output, target)
             self.val_message.loss.update(loss.item())
 
-            self.visualize_batch_image(image, target, output, epoch, batch_idx)
+            # self.visualize_batch_image(image, target, output, epoch, batch_idx)
 
             # measure elapsed time
             self.val_message.batch_time.update(time.time() - batch_start_time)
