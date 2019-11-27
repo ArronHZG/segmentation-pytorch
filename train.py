@@ -130,27 +130,24 @@ class Trainer:
                                                     keep_batchnorm_fp32=self.args.keep_batchnorm_fp32,
                                                     loss_scale=self.args.loss_scale)
 
-
-
-
         # For distributed training, wrap the model with apex.parallel.DistributedDataParallel.
         # This must be done AFTER the call to amp.initialize.  If model = DDP(model) is called
         # before model, ... = amp.initialize(model, ...), the call to amp.initialize may alter
         # the types of model's parameters in a way that disrupts or destroys DDP's allreduce hooks.
         # if args.distributed:
-            # By default, apex.parallel.DistributedDataParallel overlaps communication with
-            # computation in the backward pass.
-            # model = DDP(model)
-            # delay_allreduce delays all communication to the end of the backward pass.
+        # By default, apex.parallel.DistributedDataParallel overlaps communication with
+        # computation in the backward pass.
+        # model = DDP(model)
+        # delay_allreduce delays all communication to the end of the backward pass.
         # self.model = DDP(self.model, device_ids=self.args.gpu_ids, delay_allreduce=True)
 
         # self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=self.args.gpu_ids)
 
         id_list = [int(id) for id in args.gpu_ids.split(',')]
 
-        if len(id_list)>1:
-            self.model = torch.nn.DataParallel(self.model, device_ids=id_list)
-        
+        if len(id_list) > 1:
+            self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=id_list)
+
         self.train_message = Message(miou=MeanIoU(self.num_classes),
                                      pixacc=PixelAccuracy(),
                                      kappa=Kappa(self.num_classes),

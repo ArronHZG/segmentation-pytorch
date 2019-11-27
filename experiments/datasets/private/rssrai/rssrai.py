@@ -1,5 +1,4 @@
 import os
-import random
 from glob import glob
 
 import albumentations as A
@@ -13,6 +12,12 @@ from experiments.utils.iotools import make_sure_path_exists
 from .rssrai_utils import mean, std, encode_segmap
 from ...path import Path
 
+
+def read_csv(path):
+    with open(path, "r+") as read:
+        lines = read.readlines()
+    name_list = [x.split('\n')[0] for x in lines]
+    return name_list
 
 class Rssrai(data.Dataset):
     NUM_CLASSES = 16
@@ -34,37 +39,41 @@ class Rssrai(data.Dataset):
         self.images = []
         self.categories = []
         self.is_load_numpy = is_load_numpy
-        self.numpy_path = os.path.join(self._base_dir, f"train_numpy_{self.crop_size}")
-        make_sure_path_exists(self.numpy_path)
+        self.valid_path = os.path.join(self._base_dir, f"valid_{self.crop_size}")
+        self.train_numpy_path = os.path.join(self._base_dir, f"train_numpy_{self.crop_size}")
+        self.valid_numpy_path = os.path.join(self._base_dir, f"valid_numpy_{self.crop_size}")
+        make_sure_path_exists(self.train_numpy_path)
 
         # 加载数据
-        if self.mode == 'train' and self.is_load_numpy is False:
-            train_csv = os.path.join(self._base_dir, 'train_set.csv')
-            self._label_name_list = pd.read_csv(train_csv)["文件名"].values.tolist()
-            # self._label_path_list = glob(os.path.join(self._base_dir, 'split_train_520', 'label', '*.tif'))
-            # self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
-            self._image_dir = os.path.join(self._base_dir, 'split_train', 'img')
-            self._label_dir = os.path.join(self._base_dir, 'split_train', 'label')
-            self.len = 30000
+        if self.mode is 'train' and self.is_load_numpy is False:
+            work_dir = os.path.join(self._base_dir, "split_680_720")
+            path_name_list = read_csv(os.path.join(work_dir, "valid_set.csv"))
+            self.name_list = [os.path.split(path_name)[-1] for path_name in path_name_list]
+            self._image_dir = os.path.join(work_dir, 'image')
+            self._label_dir = os.path.join(work_dir, 'label')
+            self.len = len(self.name_list)
 
-        if self.mode == 'train' and self.is_load_numpy is True:
-            self.path_list = glob(os.path.join(self._base_dir, f'train_numpy_{self.crop_size}', '*.npz'))
+        if self.mode is 'train' and self.is_load_numpy is True:
+            self.path_list = glob(os.path.join(self.train_numpy_path, '*.npz'))
             self.len = len(self.path_list)
 
-        if self.mode == 'val':
-            self._label_path_list = glob(os.path.join(self._base_dir, 'split_val_256', 'label', '*.tif'))
-            self._label_name_list = [name.split('/')[-1] for name in self._label_path_list]
-            self._image_dir = os.path.join(self._base_dir, 'split_val_256', 'img')
-            self._label_dir = os.path.join(self._base_dir, 'split_val_256', 'label')
-            self.len = len(self._label_name_list)
+        if self.mode is 'val':
+            self.path_list = glob(os.path.join(self.valid_path, 'image', '*.tif'))
+            self.name_list = [os.path.split(path_name)[-1] for path_name in self.path_list]
+            self._label_dir = os.path.join(self.valid_path, 'label')
+            self._image_dir = os.path.join(self.valid_path, 'image')
+            self.len = len(self.path_list)
 
-    def __getitem__(self, index):
-        if (self.mode is 'train' and self.is_load_numpy is False) or self.mode is 'val':
-            sample = self.transform(self.get_numpy_image(index))
-            self.save_numpy(sample, index)
-        if self.mode is 'train' and self.is_load_numpy is True:
-            sample = self.load_numpy(index)
-        return sample
+        if self.mode is 'val' and self.is_load_numpy is True:
+            self.path_list = glob(os.path.join(self.valid_numpy_path, '*.npz'))
+            self.len = len(self.path_list)
+
+    def __getitem__(self, index, is_save=False):
+        if self.is_load_numpy is True:
+            return self.load_numpy(index)
+        else:
+            sample = self.transform(self.get_numpy_image(index), is_save=is_save)
+            return sample
 
     def __len__(self):
         return self.len
@@ -74,23 +83,21 @@ class Rssrai(data.Dataset):
 
     def get_numpy_image(self, index):
         '''
-        训练集随机选一张图片,然后随机crop
         验证集按顺序选取
         测试集按顺序选取
         '''
         sample = None
         if self.mode == 'train':
-            name = self._get_random_file_name()
-            sample = self._read_file(name)
+            sample = self._read_file(self.name_list[index])
             sample = self._random_crop_and_enhance(sample)
         if self.mode == 'val':
-            sample = self._read_file(self._label_name_list[index])
+            sample = self._read_file(self.name_list[index])
             sample = self._valid_enhance(sample)
         return sample
 
     def _random_crop_and_enhance(self, sample):
         compose = A.Compose([
-            A.PadIfNeeded(self.base_size, self.base_size, p=1),
+            # A.PadIfNeeded(self.base_size, self.base_size, p=1),
             A.RandomSizedCrop((self.crop_size - 100, self.crop_size + 100), self.crop_size, self.crop_size, p=1),
             # A.RandomCrop(self.crop_size, self.crop_size, p=1),
             A.HorizontalFlip(p=0.5),
@@ -111,44 +118,26 @@ class Rssrai(data.Dataset):
         return compose(**sample)
 
     # @functools.lru_cache( maxsize=None )
-    def _read_file(self, label_name):
-        image_name = label_name.replace("_label", "")
-        image_pil = Image.open(os.path.join(self._image_dir, image_name))
+    def _read_file(self, name):
+        image_pil = Image.open(os.path.join(self._image_dir, name))
         image_np = np.array(image_pil)
 
-        label_pil = Image.open(os.path.join(self._label_dir, label_name))
+        label_pil = Image.open(os.path.join(self._label_dir, name))
         label_np = np.array(label_pil)
         label_mask = encode_segmap(label_np)
 
         return {'image': image_np, 'label': label_mask}
 
-    def _read_test_file(self, image_name):
-        image_pil = Image.open(os.path.join(self._image_dir, image_name))
-        image_np = np.array(image_pil)
+    # def _get_random_file_name(self):
+    #     return random.choice(self.name_list)
 
-        return {'image': image_np, 'name': image_name}
-
-    def _get_random_file_name(self):
-        return random.choice(self._label_name_list)
-
-    def transform(self, sample):
-        sample['image'] = torch.from_numpy(sample['image']).permute(2, 0, 1)
-        if self.mode != "test":
+    def transform(self, sample, is_save):
+        if not is_save:
+            sample['image'] = torch.from_numpy(sample['image']).permute(2, 0, 1)
             sample['label'] = torch.from_numpy(sample['label']).long()
         return sample
 
-    def save_numpy(self, sample, index):
-        np.savez_compressed(os.path.join(self.numpy_path, f"{index}".zfill(5)), **sample)
-
     def load_numpy(self, index):
-        i = index
-        d = None
-        while d is None:
-            try:
-                sample = np.load(self.path_list[i])
-                d = {'image': torch.from_numpy(sample['image']), "label": torch.from_numpy(sample['label']).long()}
-            except:
-                print(f"{self.path_list[i]} is bad! auto remove it.")
-                os.remove(self.path_list[i])
-                self.path_list[i] = self.path_list[0]
+        sample = np.load(self.path_list[index])
+        d = {'image': torch.from_numpy(sample['image']), "label": torch.from_numpy(sample['label']).long()}
         return d
