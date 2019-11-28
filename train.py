@@ -60,7 +60,7 @@ class Trainer:
             dataset_name=self.args.dataset,
             base_size=self.args.base_size,
             crop_size=self.args.crop_size,
-            basic_dir = self.args.basic_dir
+            basic_dir=self.args.basic_dir
         )
         self.in_c = train_set.in_c
         self.mean = train_set.mean

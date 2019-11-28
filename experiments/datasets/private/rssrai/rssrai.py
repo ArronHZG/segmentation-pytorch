@@ -6,7 +6,8 @@ import numpy as np
 import torch
 import torch.utils.data as data
 from PIL import Image
-from rssrai_utils import mean, std, encode_segmap
+
+from .rssrai_utils import mean, std, encode_segmap
 
 
 def read_csv(path):
@@ -19,8 +20,7 @@ def read_csv(path):
 class Rssrai(data.Dataset):
     NUM_CLASSES = 16
 
-    def __init__(self, mode='train', base_size=256, crop_size=256, basic_dir=None,
-                 is_load_numpy=False):
+    def __init__(self, mode, base_size, crop_size, basic_dir, is_load_numpy):
 
         assert mode in ['train', 'val']
         super().__init__()
