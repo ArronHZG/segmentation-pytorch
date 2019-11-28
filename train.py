@@ -60,6 +60,7 @@ class Trainer:
             dataset_name=self.args.dataset,
             base_size=self.args.base_size,
             crop_size=self.args.crop_size,
+            basic_dir = self.args.basic_dir
         )
         self.in_c = train_set.in_c
         self.mean = train_set.mean
@@ -106,7 +107,7 @@ class Trainer:
             self.start_epoch = checkpoint['epoch'] + 1
             self.model.load_state_dict(checkpoint['state_dict'], strict=False)
             self.optimizer.load_state_dict(checkpoint['optimizer'])
-            amp.load_state_dict(checkpoint['amp'])
+            # amp.load_state_dict(checkpoint['amp'])
 
         # self.criterion = loss.CrossEntropyLossWithOHEM( 0.7 )
         print(f"=> creating criterion 'CrossEntropyLoss'")
@@ -154,7 +155,7 @@ class Trainer:
                                      batch_time=AverageMeter(),
                                      data_time=AverageMeter(),
                                      loss=AverageMeter(),
-                                     lr=self.args.lr,
+                                     lr=self.optimizer.param_groups[0]['lr'],
                                      total_time=0)
 
         self.val_message = Message(miou=MeanIoU(self.num_classes),
@@ -332,7 +333,7 @@ class Trainer:
         return new_pred
 
     def auto_reset_learning_rate(self):
-        if self.optimizer.param_groups[0]['lr'] <= 1e-4:
+        if self.optimizer.param_groups[0]['lr'] <= 1e-5:
             for param_group in self.optimizer.param_groups:
                 param_group['lr'] = self.args.lr
 
@@ -387,8 +388,9 @@ class Trainer:
                f"total_time: {message.total_time:.4f}, " + \
                f"loss: {message.loss.avg:.4f}, " + \
                f"acc: {message.pixacc.get():.4f}, " + \
+               f"kappa: {message.kappa.get():.4f}, " + \
                f"mIoU: {message.miou.get():.4f}, " + \
-               f"kappa: {message.kappa.get():.4f}"
+               f"item_mIoU: {[f'{x:.4f}' for x in message.miou.get_item()]}"
 
 
 def train():

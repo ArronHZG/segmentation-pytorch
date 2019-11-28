@@ -6,10 +6,7 @@ import numpy as np
 import torch
 import torch.utils.data as data
 from PIL import Image
-
-from experiments.utils.iotools import make_sure_path_exists
-from .rssrai_utils import mean, std, encode_segmap
-from ...path import Path
+from rssrai_utils import mean, std, encode_segmap
 
 
 def read_csv(path):
@@ -22,18 +19,17 @@ def read_csv(path):
 class Rssrai(data.Dataset):
     NUM_CLASSES = 16
 
-    def __init__(self, mode='train', base_size=256, crop_size=256, base_dir=Path.db_root_dir('rssrai'),
+    def __init__(self, mode='train', base_size=256, crop_size=256, basic_dir=None,
                  is_load_numpy=False):
 
         assert mode in ['train', 'val']
         super().__init__()
-        self._base_dir = base_dir
+        self._base_dir = basic_dir
         self.mode = mode
         self.in_c = 4
         self.mean = mean
         self.std = std
         self.crop_size = crop_size
-        self.val_crop_size = 512
         self.base_size = base_size
         self.im_ids = []
         self.images = []
@@ -42,12 +38,11 @@ class Rssrai(data.Dataset):
         self.valid_path = os.path.join(self._base_dir, f"valid_{self.crop_size}")
         self.train_numpy_path = os.path.join(self._base_dir, f"train_numpy_{self.crop_size}")
         self.valid_numpy_path = os.path.join(self._base_dir, f"valid_numpy_{self.crop_size}")
-        make_sure_path_exists(self.train_numpy_path)
 
         # 加载数据
         if self.mode is 'train' and self.is_load_numpy is False:
             work_dir = os.path.join(self._base_dir, "split_680_720")
-            path_name_list = read_csv(os.path.join(work_dir, "valid_set.csv"))
+            path_name_list = read_csv(os.path.join(work_dir, "train_set.csv"))
             self.name_list = [os.path.split(path_name)[-1] for path_name in path_name_list]
             self._image_dir = os.path.join(work_dir, 'image')
             self._label_dir = os.path.join(work_dir, 'label')
@@ -57,7 +52,7 @@ class Rssrai(data.Dataset):
             self.path_list = glob(os.path.join(self.train_numpy_path, '*.npz'))
             self.len = len(self.path_list)
 
-        if self.mode is 'val':
+        if self.mode is 'val' and self.is_load_numpy is False:
             self.path_list = glob(os.path.join(self.valid_path, 'image', '*.tif'))
             self.name_list = [os.path.split(path_name)[-1] for path_name in self.path_list]
             self._label_dir = os.path.join(self.valid_path, 'label')

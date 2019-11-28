@@ -63,7 +63,6 @@ class MeanIoU:
         item_list = self.get_item(ignore_background=ignore_background)
         return np.array(item_list).mean().item()
 
-    @functools.lru_cache()
     def get_item(self, ignore_background=False):
         if ignore_background:
             return list(self.num_intersection[1:] / (self.num_union[1:] + self.eps))

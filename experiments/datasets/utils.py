@@ -1,11 +1,10 @@
-from experiments.datasets import VOCSegmentation
 import numpy as np
 
-from experiments.datasets.private.rssrai import rssrai
+from experiments.datasets import VOCSegmentation, Rssrai
 from experiments.datasets.private.xian import xian
 
 
-def make_data_loader(dataset_name, base_size, crop_size):
+def make_data_loader(dataset_name, base_size, crop_size, basic_dir):
     if dataset_name == 'xian':
         train_set = xian.Xian(mode='train')
         val_set = xian.Xian(mode='valid')
@@ -14,8 +13,16 @@ def make_data_loader(dataset_name, base_size, crop_size):
         return train_set, val_set, num_class
 
     if dataset_name == 'rssrai':
-        train_set = rssrai.Rssrai(mode='train', base_size=base_size, crop_size=crop_size, is_load_numpy=True)
-        val_set = rssrai.Rssrai(mode='val', base_size=base_size, crop_size=crop_size)
+        train_set = Rssrai(mode='train',
+                           base_size=base_size,
+                           crop_size=crop_size,
+                           basic_dir=basic_dir,
+                           is_load_numpy=True)
+        val_set = Rssrai(mode='val',
+                         base_size=base_size,
+                         crop_size=crop_size,
+                         basic_dir=basic_dir,
+                         is_load_numpy=True)
         num_class = train_set.NUM_CLASSES
 
         return train_set, val_set, num_class

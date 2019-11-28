@@ -12,6 +12,7 @@ class Options:
         # net and datasets
         parser.add_argument('--model', type=str, help='net name', required=True)
         parser.add_argument('--dataset', type=str, help='dataset name', required=True)
+        parser.add_argument('--basic-dir', type=str, help='dataset dir', required=True)
         parser.add_argument('--backbone', type=str, default='resnet50', help='backbone name (default: resnet50)')
         parser.add_argument('--num-workers', type=int, default=4, metavar='N', help='datasets threads')
         parser.add_argument('--base-size', type=int, default=520, help='base image size (default: 520)')
