@@ -9,8 +9,6 @@ import numpy as np
 import torch
 from PIL import Image
 
-from experiments.datasets.path import Path
-
 np.set_printoptions(threshold=sys.maxsize)
 Image.MAX_IMAGE_PIXELS = None
 
@@ -106,8 +104,7 @@ def read_csv(path):
 
 
 @func_time
-def split():
-    basic_dir = Path.db_root_dir('rssrai')
+def split_dataset(basic_dir):
     ford = "source_data"
     pixel = (680, 720)
     path_name_list = glob.glob(os.path.join(basic_dir, ford, "image", "*.tif"))
@@ -119,18 +116,17 @@ def split():
         for type in types:
             split_image(osp.join(basic_dir, ford, type),
                         name,
-                        osp.join(basic_dir, f"split_{pixel[0]}", type),
+                        osp.join(basic_dir, f"split_{pixel[0]}_{pixel[1]}", type),
                         output_image_h_w=pixel)
     print("end")
 
 
 @func_time
-def split2():
-    basic_dir = Path.db_root_dir('rssrai')
+def split_valid(basic_dir, pixel):
     work_dir = os.path.join(basic_dir, "split_680_720")
     path_name_list = read_csv(os.path.join(work_dir, "valid_set.csv"))
     name_list = [osp.split(path_name)[-1] for path_name in path_name_list]
-    pixel = (512, 512)
+    pixel_tuple = (pixel, pixel)
     print("start")
     for index, name in enumerate(name_list):
         print(f"{index + 1}/{len(name_list)}   {name}")
@@ -138,14 +134,14 @@ def split2():
         for type in types:
             split_image(osp.join(work_dir, type),
                         name,
-                        osp.join(basic_dir, f"valid_{pixel[0]}", type),
-                        output_image_h_w=pixel)
+                        osp.join(basic_dir, f"valid_{pixel_tuple[0]}", type),
+                        output_image_h_w=pixel_tuple)
     print("end")
 
 
-def split_train_and_valid():
-    basic_dir = Path.db_root_dir('rssrai')
+def split_train_and_valid(basic_dir):
     work_dir = os.path.join(basic_dir, "split_680_720")
+
     path_list = glob.glob(os.path.join(work_dir, "image", "*.tif"))
 
     train_f = open(os.path.join(work_dir, "train_set.csv"), "w+")
@@ -170,7 +166,11 @@ def split_train_and_valid():
 
 
 if __name__ == '__main__':
-    split2()
+    basic_dir = '/home/arron/dataset/rssrai2019'
+    split_dataset(basic_dir)
+    split_train_and_valid(basic_dir)
+    split_valid(basic_dir, 256)
+    split_valid(basic_dir, 512)
 # p = 1 run time： 32.33511567115784 s
 # p = 2 run time： 62.33348083496094 s
 # p = 4 run time： 76.42453122138977 s

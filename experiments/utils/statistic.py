@@ -6,7 +6,6 @@ import numpy as np
 import seaborn as sns
 from PIL import Image
 
-from experiments.datasets.path import Path
 from experiments.datasets.utils import make_data_loader
 from experiments.utils.iotools import make_sure_path_exists
 
@@ -49,9 +48,8 @@ def sns_barplot(class_list, each_number, all_number_ignore_bg, statistic_dir, fi
     plt.cla()
 
 
-def statistic(dataset_name):
-    basic_dir = Path.db_root_dir(dataset_name)
-    _, _, num_classes = make_data_loader(dataset_name, base_size=512, crop_size=512)
+def statistic(dataset_name, crop_size, basic_dir):
+    _, _, num_classes = make_data_loader(dataset_name, base_size=512, crop_size=crop_size, basic_dir=basic_dir)
     label_dir = os.path.join(basic_dir, "train", "label")
     statistic_dir = os.path.join(basic_dir, "train", "statistic")
     make_sure_path_exists(statistic_dir)

@@ -4,7 +4,6 @@ import numpy as np
 from PIL import Image
 
 from .base import BaseDataset
-from ..path import Path
 
 
 class VOCSegmentation(BaseDataset):
@@ -16,7 +15,7 @@ class VOCSegmentation(BaseDataset):
     ]
     NUM_CLASSES = 21
 
-    def __init__(self, root=Path.db_root_dir("pascal_voc"),
+    def __init__(self, root,
                  split='train',
                  mode=None,
                  **kwargs):

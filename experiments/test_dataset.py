@@ -6,7 +6,6 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from experiments.datasets import get_segmentation_dataset
-from experiments.datasets.path import Path
 from experiments.datasets.utils import decode_segmap
 from experiments.utils.iotools import make_sure_path_exists
 
@@ -17,7 +16,7 @@ plt.rcParams['figure.dpi'] = 500  # 分辨率
 
 
 def test_data(dataset_name, **kwargs):
-    test_path = make_sure_path_exists(os.path.join(Path.project_root, "dataset_test", dataset_name))
+    test_path = make_sure_path_exists(os.path.join(kwargs['basic_dir'], "dataset_test", dataset_name))
 
     dataset = get_segmentation_dataset(dataset_name, **kwargs)
 
@@ -68,4 +67,6 @@ if __name__ == '__main__':
     # test_data("rssrai", mode='train', is_load_numpy=True)
     # test_data("rssrai", mode='train')
     # test_data("rssrai", mode='val')
-    get_numpy("rssrai", mode='train')
+    basic_dir = '/home/arron/dataset/rssrai2019'
+
+    get_numpy("rssrai", basic_dir=basic_dir, mode='train')

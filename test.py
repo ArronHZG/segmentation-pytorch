@@ -7,7 +7,6 @@ from pprint import pprint
 import torch
 from tqdm import tqdm
 
-from experiments.datasets.path import Path
 from experiments.datasets.private.rssrai.rssrai_test import RssraiTestOneImage, save_path
 from experiments.option import Options
 from experiments.utils.saver import Saver
@@ -82,7 +81,7 @@ if __name__ == "__main__":
     now += f"{time.localtime(time.time()).tm_hour}-{time.localtime(time.time()).tm_min}-{time.localtime(time.time()).tm_sec}"
     tester = Tester(args)
 
-    base_dir = Path.db_root_dir('rssrai')
+    base_dir = ''
     image_dir = os.path.join(base_dir, 'train', 'img')
     save_dir = save_path(os.path.join(tester.saver.experiment_dir, f'test_output_model={args.model}_time={now}'))
 

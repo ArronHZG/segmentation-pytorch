@@ -12,13 +12,12 @@ from PIL import Image
 from torch.utils.data import DataLoader
 
 from ..rssrai.rssrai_utils import mean, std, encode_segmap
-from ...path import Path
 
 
 class Xian(data.Dataset):
     NUM_CLASSES = 10
 
-    def __init__(self, mode='train', base_dir=Path.db_root_dir('rssrai')):
+    def __init__(self, mode, base_dir):
 
         assert mode in ['train', 'valid', 'test']
         super().__init__()
