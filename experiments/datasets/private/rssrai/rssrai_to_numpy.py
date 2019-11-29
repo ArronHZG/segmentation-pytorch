@@ -12,7 +12,11 @@ def save_numpy(path, sample, index):
 
 
 def get_valid_numpy(basic_dir, pixel):
-    rssrai = Rssrai(mode='val', base_size=None, crop_size=pixel, basic_dir=basic_dir)
+    rssrai = Rssrai(mode='val',
+                    base_size=None,
+                    crop_size=pixel,
+                    basic_dir=basic_dir,
+                    is_load_numpy=False)
     rssrai_num = len(rssrai)
     numpy_path = os.path.join(basic_dir,
                               f"valid_numpy_{pixel}")
@@ -25,12 +29,16 @@ def get_valid_numpy(basic_dir, pixel):
 
 
 def get_train_numpy(basic_dir, pixel):
-    rssrai = Rssrai(mode='train', base_size=None, crop_size=pixel, basic_dir=basic_dir)
+    rssrai = Rssrai(mode='train',
+                    base_size=None,
+                    crop_size=pixel,
+                    basic_dir=basic_dir,
+                    is_load_numpy=False)
     rssrai_num = len(rssrai)
     numpy_path = os.path.join(basic_dir,
                               f"train_numpy_{pixel}")
     print(f"rssrai_num {rssrai_num}")
-    pool = multiprocessing.Pool(processes=40)
+    pool = multiprocessing.Pool(processes=10)
     for epoch in range(40):
         pool.apply_async(epoch_save_numpy, (epoch, numpy_path, rssrai, rssrai_num))
     pool.close()

@@ -7,7 +7,7 @@ import torch
 import torch.utils.data as data
 from PIL import Image
 
-from .rssrai_utils import mean, std, encode_segmap
+from rssrai_utils import mean, std, encode_segmap
 
 
 def read_csv(path):
@@ -93,7 +93,7 @@ class Rssrai(data.Dataset):
     def _random_crop_and_enhance(self, sample):
         compose = A.Compose([
             # A.PadIfNeeded(self.base_size, self.base_size, p=1),
-            A.RandomSizedCrop((self.crop_size - 100, self.crop_size + 100), self.crop_size, self.crop_size, p=1),
+            A.RandomSizedCrop((self.crop_size - 50, self.crop_size + 50), self.crop_size, self.crop_size, p=1),
             # A.RandomCrop(self.crop_size, self.crop_size, p=1),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),

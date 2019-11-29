@@ -141,15 +141,12 @@ def split_valid(basic_dir, pixel):
 
 def split_train_and_valid(basic_dir):
     work_dir = os.path.join(basic_dir, "split_680_720")
-
     path_list = glob.glob(os.path.join(work_dir, "image", "*.tif"))
-
     train_f = open(os.path.join(work_dir, "train_set.csv"), "w+")
-
     valid_f = open(os.path.join(work_dir, "valid_set.csv"), "w+")
 
     for name in path_list:
-        if random.randint(0, 9) is 0:
+        if random.randint(0, 4) is 0:
             valid_f.write(f"{name}\n")
         else:
             train_f.write(f"{name}\n")
@@ -157,20 +154,18 @@ def split_train_and_valid(basic_dir):
     train_f.close()
     valid_f.close()
 
-    lines = None
     with open(os.path.join(work_dir, "train_set.csv"), "r+") as read:
         lines = read.readlines()
-    name_list = [x.split('\n')[0] for x in lines]
-    print(name_list)
-    print(len(name_list))
+        name_list = [x.split('\n')[0] for x in lines]
+        print(len(name_list))
 
 
 if __name__ == '__main__':
     basic_dir = '/home/arron/dataset/rssrai2019'
-    split_dataset(basic_dir)
+    # split_dataset(basic_dir)
     split_train_and_valid(basic_dir)
     split_valid(basic_dir, 256)
-    split_valid(basic_dir, 512)
+    # split_valid(basic_dir, 512)
 # p = 1 run time： 32.33511567115784 s
 # p = 2 run time： 62.33348083496094 s
 # p = 4 run time： 76.42453122138977 s

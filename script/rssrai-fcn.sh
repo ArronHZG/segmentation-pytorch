@@ -4,5 +4,5 @@ python  ../train.py  \
         --dataset rssrai \
         --gpu-ids 1 \
         --batch-size 100 \
-        --crop-size 256
-#        --check-point-id 1
+        --crop-size 256 \
+        --check-point-id 2
