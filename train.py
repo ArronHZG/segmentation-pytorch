@@ -145,9 +145,10 @@ class Trainer:
         # self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=self.args.gpu_ids)
 
         id_list = [int(id) for id in args.gpu_ids.split(',')]
+        print(f"using gpus {id_list}")
 
         if len(id_list) > 1:
-            self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=id_list)
+            self.model = torch.nn.DataParallel(self.model, device_ids=id_list)
 
         self.train_message = Message(miou=MeanIoU(self.num_classes),
                                      pixacc=PixelAccuracy(),
@@ -201,7 +202,6 @@ class Trainer:
             self.train_message.loss.update(loss.item())
 
             if self.args.apex:
-                from apex import amp
                 with amp.scale_loss(loss, self.optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
@@ -333,7 +333,7 @@ class Trainer:
         return new_pred
 
     def auto_reset_learning_rate(self):
-        if self.optimizer.param_groups[0]['lr'] <= 1e-5:
+        if self.optimizer.param_groups[0]['lr'] <= 1e-4:
             for param_group in self.optimizer.param_groups:
                 param_group['lr'] = self.args.lr
 

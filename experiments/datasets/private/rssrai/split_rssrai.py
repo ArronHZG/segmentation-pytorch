@@ -9,6 +9,8 @@ import numpy as np
 import torch
 from PIL import Image
 
+from experiments.datasets.private.rssrai.rssrai_utils import encode_segmap
+
 np.set_printoptions(threshold=sys.maxsize)
 Image.MAX_IMAGE_PIXELS = None
 
@@ -112,7 +114,7 @@ def split_dataset(basic_dir):
     print("start")
     for index, name in enumerate(name_list):
         print(f"{index + 1}/{len(name_list)}   {name}")
-        types = ("image", "label")
+        types = ("image", "label", "label_vis")
         for type in types:
             split_image(osp.join(basic_dir, ford, type),
                         name,
@@ -160,11 +162,28 @@ def split_train_and_valid(basic_dir):
         print(len(name_list))
 
 
+def transform_label_vis(basic_dir):
+    ford = "source_data"
+    save_path = os.path.join(basic_dir, ford, "label")
+    make_sure_path_exists(save_path)
+    path_name_list = glob.glob(os.path.join(basic_dir, ford, "label_vis", "*.tif"))
+    name_list = [osp.split(path_name)[-1] for path_name in path_name_list]
+    print("start")
+    for index, name in enumerate(name_list):
+        print(f"{index + 1}/{len(name_list)}   {name}")
+        file_image = Image.open(osp.join(basic_dir, ford, "label_vis", name))
+        label_np = np.array(file_image)
+        label_mask = encode_segmap(label_np)
+        save_image(label_mask, save_path, name, "L")
+    print("end")
+
+
 if __name__ == '__main__':
-    basic_dir = '/home/arron/dataset/rssrai2019'
-    # split_dataset(basic_dir)
-    split_train_and_valid(basic_dir)
-    split_valid(basic_dir, 256)
+    basic_dir = '/home/deamov/dataset/rssrai2019'
+    # transform_label_vis(basic_dir)
+    split_dataset(basic_dir)
+    # split_train_and_valid(basic_dir)
+    # split_valid(basic_dir, 256)
     # split_valid(basic_dir, 512)
 # p = 1 run time： 32.33511567115784 s
 # p = 2 run time： 62.33348083496094 s

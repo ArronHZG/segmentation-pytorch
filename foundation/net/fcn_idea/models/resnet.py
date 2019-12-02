@@ -5,7 +5,7 @@ from .utils import initialize_weights
 
 
 class ResNet(nn.Module):
-    def __init__(self, backbone='resnet101', in_channels=3, pretrained=True,
+    def __init__(self, backbone='resnet50', in_channels=3, pretrained=True,
                  zero_init_residual=False):
         super(ResNet, self).__init__()
         model = getattr(torchvision_resnet, backbone)(pretrained)

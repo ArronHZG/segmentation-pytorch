@@ -1,6 +1,6 @@
 import sys
 
 sys.path.append("..")
-from experiments.utils.statistic import statistic
+from experiments.datasets.private.rssrai.statistic import statistic
 
 statistic("rssrai")

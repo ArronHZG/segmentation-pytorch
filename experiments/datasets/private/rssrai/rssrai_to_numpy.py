@@ -52,9 +52,9 @@ def epoch_save_numpy(epoch, numpy_path, rssrai, rssrai_num):
         save_numpy(numpy_path, sample, epoch * rssrai_num + index)
 
 
-basic_dir = '/home/arron/dataset/rssrai2019'
+basic_dir = '/home/deamov/dataset/rssrai2019'
 
 get_valid_numpy(basic_dir, 256)
 # get_valid_numpy(512)
-get_train_numpy(basic_dir, 256)
+# get_train_numpy(basic_dir, 256)
 # get_train_numpy(512)

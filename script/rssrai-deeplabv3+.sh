@@ -1,7 +1,7 @@
 python  ../train.py  \
         --model deeplabv3plus \
-        --basic-dir /home/arron/dataset/rssrai2019 \
+        --basic-dir /home/deamov/dataset/rssrai2019 \
         --dataset rssrai \
-        --gpu-ids 2 \
-        --batch-size 100 \
+        --gpu-ids 1 \
+        --batch-size 80 \
         --crop-size 256

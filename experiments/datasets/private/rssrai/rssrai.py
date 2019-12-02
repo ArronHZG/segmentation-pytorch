@@ -2,12 +2,13 @@ import os
 from glob import glob
 
 import albumentations as A
+import random
 import numpy as np
 import torch
 import torch.utils.data as data
 from PIL import Image
 
-from rssrai_utils import mean, std, encode_segmap
+from .rssrai_utils import mean, std, encode_segmap
 
 
 def read_csv(path):
@@ -46,7 +47,8 @@ class Rssrai(data.Dataset):
             self.name_list = [os.path.split(path_name)[-1] for path_name in path_name_list]
             self._image_dir = os.path.join(work_dir, 'image')
             self._label_dir = os.path.join(work_dir, 'label')
-            self.len = len(self.name_list)
+            # self.len = len(self.name_list)
+            self.len = 30000
 
         if self.mode is 'train' and self.is_load_numpy is True:
             self.path_list = glob(os.path.join(self.train_numpy_path, '*.npz'))
@@ -83,7 +85,8 @@ class Rssrai(data.Dataset):
         '''
         sample = None
         if self.mode == 'train':
-            sample = self._read_file(self.name_list[index])
+            name = self._get_random_file_name()
+            sample = self._read_file(name)
             sample = self._random_crop_and_enhance(sample)
         if self.mode == 'val':
             sample = self._read_file(self.name_list[index])
@@ -123,8 +126,8 @@ class Rssrai(data.Dataset):
 
         return {'image': image_np, 'label': label_mask}
 
-    # def _get_random_file_name(self):
-    #     return random.choice(self.name_list)
+    def _get_random_file_name(self):
+        return random.choice(self.name_list)
 
     def transform(self, sample, is_save):
         if not is_save:

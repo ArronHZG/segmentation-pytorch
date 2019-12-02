@@ -28,8 +28,8 @@ def make_data_loader(dataset_name, base_size, crop_size, basic_dir):
         return train_set, val_set, num_class
 
     if dataset_name == 'pascal_voc':
-        train_set = VOCSegmentation(split='train', mode='train', base_size=base_size, crop_size=crop_size)
-        val_set = VOCSegmentation(split='val', mode='val', base_size=base_size, crop_size=crop_size)
+        train_set = VOCSegmentation(root=basic_dir, split='train', base_size=base_size, crop_size=crop_size)
+        val_set = VOCSegmentation(root=basic_dir, split='val', base_size=base_size, crop_size=crop_size)
         num_class = train_set.NUM_CLASSES
 
         return train_set, val_set, num_class

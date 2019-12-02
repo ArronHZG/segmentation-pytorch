@@ -1,8 +1,9 @@
 python  ../train.py \
         --model fcn-idea \
-        --basic-dir /home/arron/dataset/rssrai2019 \
+        --basic-dir /home/deamov/dataset/rssrai2019 \
         --dataset rssrai \
         --gpu-ids 0 \
+        --apex 2 \
+        --epochs 1000 \
         --batch-size 100 \
-        --crop-size 256 \
-        --check-point-id 3
+        --crop-size 256

@@ -3,10 +3,10 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from PIL import Image
 
-from experiments.datasets.utils import make_data_loader
 from experiments.utils.iotools import make_sure_path_exists
 
 plt.rcParams['savefig.dpi'] = 200  # 图片像素
@@ -20,6 +20,13 @@ def statistic_log(f, name, all_number, all_number_ignore_bg, each_number):
     f.write(
         f'\t percentage_ignore_bg: \t{" " * 10}{[f"{x:.4f}" for x in list(each_number[1:] / all_number_ignore_bg)]}:\n')
 
+    # con_list = [{"name": name}]
+    # for index, p in enumerate():
+    #     con_list.append({f"{index}": p})
+    pd_list = [name]
+    pd_list.extend([x for x in list(each_number[1:] / all_number_ignore_bg)])
+    return pd_list
+
 
 def statistic_one_label(f, label_dir, statistic_dir, name, num_classes):
     class_list = [x for x in range(1, num_classes)]
@@ -29,10 +36,10 @@ def statistic_one_label(f, label_dir, statistic_dir, name, num_classes):
     each_number.reshape((1, num_classes))
     all_number = each_number.sum()
     all_number_ignore_bg = each_number[1:].sum()
-    statistic_log(f, name, all_number, all_number_ignore_bg, each_number)
+    con_list = statistic_log(f, name, all_number, all_number_ignore_bg, each_number)
     code, _ = os.path.splitext(name)
     sns_barplot(class_list, each_number, all_number_ignore_bg, statistic_dir, f"{code}_statistic.png")
-    return each_number, all_number, all_number_ignore_bg
+    return each_number, all_number, all_number_ignore_bg, con_list
 
 
 def sns_barplot(class_list, each_number, all_number_ignore_bg, statistic_dir, file_name):
@@ -48,10 +55,9 @@ def sns_barplot(class_list, each_number, all_number_ignore_bg, statistic_dir, fi
     plt.cla()
 
 
-def statistic(dataset_name, crop_size, basic_dir):
-    _, _, num_classes = make_data_loader(dataset_name, base_size=512, crop_size=crop_size, basic_dir=basic_dir)
-    label_dir = os.path.join(basic_dir, "train", "label")
-    statistic_dir = os.path.join(basic_dir, "train", "statistic")
+def statistic(num_classes, basic_dir):
+    label_dir = os.path.join(basic_dir, "label")
+    statistic_dir = os.path.join(basic_dir, "statistic")
     make_sure_path_exists(statistic_dir)
     path_name_list = glob.glob(os.path.join(label_dir, "*.tif"))
     print(f"label file number : {len(path_name_list)}")
@@ -61,16 +67,30 @@ def statistic(dataset_name, crop_size, basic_dir):
     sum_each_number = np.zeros(num_classes)
     sum_all_number = 0
     sum_all_number_ignore_bg = 0
+    con_lists = []
     with open(os.path.join(statistic_dir, "label_statistic.txt"), "w+") as f:
         for path_name in path_name_list:
             dirt, name = os.path.split(path_name)
             print(name)
-            each_number, all_number, all_number_ignore_bg = statistic_one_label(f, label_dir, statistic_dir, name,
-                                                                                num_classes)
+            each_number, all_number, all_number_ignore_bg, con_list = statistic_one_label(f, label_dir,
+                                                                                          statistic_dir,
+                                                                                          name,
+                                                                                          num_classes)
             sum_each_number += each_number
             sum_all_number += all_number
             sum_all_number_ignore_bg += all_number_ignore_bg
+            con_lists.append(con_list)
 
+        name = ['name']
+        name.extend(class_list)
+        df = pd.DataFrame(con_lists, columns=name)
+        df.to_csv(os.path.join(statistic_dir, 'label_statistic.csv'), index=False)
         f.write(f'\n\n===================================================================\n')
         statistic_log(f, "total", sum_all_number, sum_all_number_ignore_bg, sum_each_number)
         sns_barplot(class_list, sum_each_number, sum_all_number_ignore_bg, statistic_dir, "all_statistic.png")
+
+
+basic_dir = '/home/deamov/dataset/rssrai2019/source_data'
+statistic(16, basic_dir=basic_dir)
+basic_dir = '/home/deamov/dataset/rssrai2019/split_680_720'
+statistic(16, basic_dir=basic_dir)

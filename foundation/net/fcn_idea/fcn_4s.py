@@ -26,7 +26,7 @@ class FCNHead(nn.Sequential):
         super(FCNHead, self).__init__(*layers)
 
 
-class FCNUpsampling(nn.Sequential):
+class FcnUpSampling(nn.Sequential):
     '''
 
     '''
@@ -36,7 +36,7 @@ class FCNUpsampling(nn.Sequential):
             nn.ConvTranspose2d(num_classes, num_classes, kernel_size,
                                stride=stride, padding=padding, bias=False)
         ]
-        super(FCNUpsampling, self).__init__(*layers)
+        super(FcnUpSampling, self).__init__(*layers)
 
 
 class FCN(nn.Module):
@@ -55,11 +55,11 @@ class FCN(nn.Module):
         # out = s(in-1)+d(k-1)+1-2p
         # while s = s , d =1, k=2s, p = s/2, we will get out = s*in
         # we need to zoom in 32 times by 2 x 2 x 2 x 4
-        self.up_score2 = FCNUpsampling(num_classes, 4, stride=2, padding=1)
+        self.up_score2 = FcnUpSampling(num_classes, 4, stride=2, padding=1)
         # self.up_score2_1 = FCNUpsampling(num_classes, 4, stride=2, padding=1)
         # self.up_score2_2 = FCNUpsampling(num_classes, 4, stride=2, padding=1)
         # self.up_score2_3 = FCNUpsampling(num_classes, 4, stride=2, padding=1)
-        self.up_score4 = FCNUpsampling(num_classes, 8, stride=4, padding=2)
+        self.up_score4 = FcnUpSampling(num_classes, 8, stride=4, padding=2)
         # self.up_score8 = FCNUpsampling(num_classes, 16, stride=8, padding=4)
         # self.up_score32 = FCNUpsampling(num_classes, 64, stride=32, padding=16)
 
@@ -85,8 +85,8 @@ class FCN(nn.Module):
         pool3_same_channel = self.pool3_FCNHead(pool3)
         pool4_same_channel = self.pool4_FCNHead(pool4)
 
-        if self.aux_classifier is not None:
-            result["aux"] = self.up_score32(pool4_same_channel)
+        # if self.aux_classifier is not None:
+        #     result["aux"] = self.up_score32(pool4_same_channel)
 
         # merge x and pool3   scaling = 1/16
         x = self.up_score2(pool4_same_channel) + pool3_same_channel
