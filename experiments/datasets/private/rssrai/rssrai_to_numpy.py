@@ -22,7 +22,7 @@ def get_valid_numpy(basic_dir, pixel):
                               f"valid_numpy_{pixel}")
     print(f"rssrai_num {rssrai_num}")
     pool = multiprocessing.Pool(processes=10)
-    for epoch in range(1):
+    for epoch in range(20):
         pool.apply_async(epoch_save_numpy, (epoch, numpy_path, rssrai, rssrai_num))
     pool.close()
     pool.join()
@@ -56,5 +56,5 @@ basic_dir = '/home/deamov/dataset/rssrai2019'
 
 get_valid_numpy(basic_dir, 256)
 # get_valid_numpy(512)
-# get_train_numpy(basic_dir, 256)
+get_train_numpy(basic_dir, 256)
 # get_train_numpy(512)

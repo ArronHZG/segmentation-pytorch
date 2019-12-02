@@ -24,7 +24,7 @@ def statistic_log(f, name, all_number, all_number_ignore_bg, each_number):
     # for index, p in enumerate():
     #     con_list.append({f"{index}": p})
     pd_list = [name]
-    pd_list.extend([x for x in list(each_number[1:] / all_number_ignore_bg)])
+    pd_list.extend(list(each_number))
     return pd_list
 
 
@@ -82,7 +82,7 @@ def statistic(num_classes, basic_dir):
             con_lists.append(con_list)
 
         name = ['name']
-        name.extend(class_list)
+        name.extend([x for x in range(num_classes)])
         df = pd.DataFrame(con_lists, columns=name)
         df.to_csv(os.path.join(statistic_dir, 'label_statistic.csv'), index=False)
         f.write(f'\n\n===================================================================\n')
@@ -90,7 +90,7 @@ def statistic(num_classes, basic_dir):
         sns_barplot(class_list, sum_each_number, sum_all_number_ignore_bg, statistic_dir, "all_statistic.png")
 
 
-basic_dir = '/home/deamov/dataset/rssrai2019/source_data'
-statistic(16, basic_dir=basic_dir)
+# basic_dir = '/home/deamov/dataset/rssrai2019/source_data'
+# statistic(16, basic_dir=basic_dir)
 basic_dir = '/home/deamov/dataset/rssrai2019/split_680_720'
 statistic(16, basic_dir=basic_dir)

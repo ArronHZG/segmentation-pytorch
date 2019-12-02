@@ -92,9 +92,8 @@ def split_image(image_path, image_name, save_path, output_image_h_w=(512, 512)):
         save_image(little_image.cpu().numpy(), save_path, f'{code}_{h}_{w}{suffix}', mode=mode)
 
 
-def save_image(np_image, path, name, mode):
+def save_image(np_image, path, name):
     image = Image.fromarray(np_image.astype('uint8'))
-    image.mode = mode
     image.save(os.path.join(path, name))
 
 
@@ -174,12 +173,13 @@ def transform_label_vis(basic_dir):
         file_image = Image.open(osp.join(basic_dir, ford, "label_vis", name))
         label_np = np.array(file_image)
         label_mask = encode_segmap(label_np)
-        save_image(label_mask, save_path, name, "L")
+        save_image(label_mask, save_path, name)
     print("end")
 
 
 if __name__ == '__main__':
     basic_dir = '/home/deamov/dataset/rssrai2019'
+    print(basic_dir)
     # transform_label_vis(basic_dir)
     split_dataset(basic_dir)
     # split_train_and_valid(basic_dir)
