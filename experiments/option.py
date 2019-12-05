@@ -27,6 +27,11 @@ class Options:
         parser.add_argument('--batch-size', type=int, default=64, metavar='N', help='default: auto')
         parser.add_argument('--val-batch-size', type=int, default=None, metavar='N',
                             help='(default: same as batch size)')
+
+        # training process
+        parser.add_argument('--tensorboard', action='store_true', default=False, help='using tensorboard')
+
+
         # optimizer params
         parser.add_argument('--optim', type=str, default="SGD", help='(default: SGD)')
         parser.add_argument('--lr', type=float, default=None, metavar='LR', help='learning rate (default: auto)')
@@ -38,7 +43,7 @@ class Options:
 
         # apex
         # a Pytorch extension with NVIDIA-maintained utilities to streamline mixed precision and distributed training
-        parser.add_argument('--apex', type=int, default=1, choices=[0, 1, 2, 3], help='Automatic Mixed Precision')
+        parser.add_argument('--apex', type=int, default=2, choices=[0, 1, 2, 3], help='Automatic Mixed Precision')
         parser.add_argument('--keep-batchnorm-fp32', type=str, default=None)
         parser.add_argument('--loss-scale', type=str, default=None)
         parser.add_argument('--sync_bn', action='store_true', default=True, help='enabling apex sync BN.')
@@ -90,7 +95,6 @@ class Options:
         'pascal_aug': 50,
         'pcontext': 80,
         'ade20k': 120,
-        'rssrai': 500,
     }
 
     def init_distributed_cuda(self, args):

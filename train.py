@@ -16,7 +16,6 @@ from experiments.datasets.utils import make_data_loader, decode_segmap
 from experiments.option import Options
 from experiments.utils.iotools import make_sure_path_exists
 from experiments.utils.saver import Saver
-from experiments.utils.summaries import TensorboardSummary
 from foundation import get_model, get_optimizer
 from foundation.metric import MeanIoU, PixelAccuracy, Kappa, AverageMeter
 
@@ -52,8 +51,10 @@ class Trainer:
         self.saver.save_experiment_config()
 
         # Define Tensorboard Summary
-        make_sure_path_exists(os.path.join(self.saver.experiment_dir, "tensorboard"))
-        self.summary = TensorboardSummary(os.path.join(self.saver.experiment_dir, "tensorboard"))
+        if self.args.tensorboard:
+            from experiments.utils.summaries import TensorboardSummary
+            make_sure_path_exists(os.path.join(self.saver.experiment_dir, "tensorboard"))
+            self.summary = TensorboardSummary(os.path.join(self.saver.experiment_dir, "tensorboard"))
 
         # Define Dataloader
         train_set, val_set, self.num_classes = make_data_loader(
@@ -211,7 +212,8 @@ class Trainer:
             #     torch.cuda.empty_cache()
 
             self.optimizer.step()
-            self.summary.writer.add_scalar('total_loss_iter', self.train_message.loss.avg,
+            if self.args.tensorboard:
+                self.summary.writer.add_scalar('total_loss_iter', self.train_message.loss.avg,
                                            batch_idx + batch_num * epoch)
 
             # measure elapsed time
@@ -240,11 +242,12 @@ class Trainer:
         # get lr
         self.train_message.lr = self.optimizer.param_groups[0]['lr']
 
-        self.summary.writer.add_scalar("learning_rate", self.train_message.lr, epoch)
-        self.summary.writer.add_scalars('metric/loss_epoch', {"train": self.train_message.loss.avg}, epoch)
-        self.summary.writer.add_scalars('metric/mIoU', {"train": self.train_message.miou.get()}, epoch)
-        self.summary.writer.add_scalars('metric/Acc', {"train": self.train_message.pixacc.get()}, epoch)
-        self.summary.writer.add_scalars('metric/kappa', {"train": self.train_message.kappa.get()}, epoch)
+        if self.args.tensorboard:
+            self.summary.writer.add_scalar("learning_rate", self.train_message.lr, epoch)
+            self.summary.writer.add_scalars('metric/loss_epoch', {"train": self.train_message.loss.avg}, epoch)
+            self.summary.writer.add_scalars('metric/mIoU', {"train": self.train_message.miou.get()}, epoch)
+            self.summary.writer.add_scalars('metric/Acc', {"train": self.train_message.pixacc.get()}, epoch)
+            self.summary.writer.add_scalars('metric/kappa', {"train": self.train_message.kappa.get()}, epoch)
 
         # print('[Epoch: %d, numImages: %5d]' % (epoch, batch_num * self.args.batch_size))
 
@@ -312,13 +315,11 @@ class Trainer:
         is_best = new_pred > self.best_pred
         self.best_pred = max(new_pred, self.best_pred)
 
-        self.summary.writer.add_scalars('metric/loss_epoch', {"valid": self.val_message.loss.avg}, epoch)
-        self.summary.writer.add_scalars('metric/mIoU', {"valid": new_pred}, epoch)
-        self.summary.writer.add_scalars('metric/Acc', {"valid": self.val_message.pixacc.get()}, epoch)
-        self.summary.writer.add_scalars('metric/kappa', {"valid": self.val_message.kappa.get()}, epoch)
-        # print('Validation:')
-        # print(f"[Epoch: {epoch}, numImages: {batch_num * self.args.batch_size}]")
-        # print(f'Valid Loss: {self.valid_message.loss.avg:.4f}')
+        if self.args.tensorboard:
+            self.summary.writer.add_scalars('metric/loss_epoch', {"valid": self.val_message.loss.avg}, epoch)
+            self.summary.writer.add_scalars('metric/mIoU', {"valid": new_pred}, epoch)
+            self.summary.writer.add_scalars('metric/Acc', {"valid": self.val_message.pixacc.get()}, epoch)
+            self.summary.writer.add_scalars('metric/kappa', {"valid": self.val_message.kappa.get()}, epoch)
 
         save_message = f"train\t{self.message_str('train')}\t val\t{self.message_str('val')}"
 

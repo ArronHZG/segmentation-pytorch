@@ -6,6 +6,7 @@ from .open.pascal_aug import VOCAugSegmentation
 from .open.pcontext import ContextSegmentation
 from .open.cityscapes import CitySegmentation
 from .private.rssrai.rssrai import Rssrai
+from .private.xian.xian import Xian
 
 
 datasets = {
@@ -16,6 +17,7 @@ datasets = {
     'pcontext': ContextSegmentation,
     'citys': CitySegmentation,
     'rssrai': Rssrai,
+    'xian': Xian
 }
 
 

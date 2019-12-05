@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from .layers import unetConv2, unetUp
+from foundation.net.unet.model.layers import unetConv2, unetUp
 from .utils import init_weights
 
 

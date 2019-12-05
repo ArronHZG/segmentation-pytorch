@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from .utils import init_weights
+from foundation.net.unet.utils import init_weights
 
 
 class unetConv2(nn.Module):
