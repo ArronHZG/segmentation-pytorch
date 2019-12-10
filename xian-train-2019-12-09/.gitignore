@@ -5,7 +5,3 @@ __pycache__/
 *.pyc
 dataset_test/
 script/run/
-
-*.so
-*.zip
-*.c

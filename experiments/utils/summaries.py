@@ -6,6 +6,7 @@ import torch
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 # from tensorboardX import SummaryWriter
+from tqdm import tqdm
 
 
 def save_image(np_image, path, name, mode):
@@ -14,15 +15,15 @@ def save_image(np_image, path, name, mode):
     image.save(os.path.join(path, name))
 
 
-def merge_rssrai_test_label_images(image_path, save_image_path):
-    import pandas as pd
-    df = pd.read_csv("test_name_list.csv")
-    name_list = df['name'].tolist()
-    for name in tqdm(name_list):
-        merge_image(image_path,
-                    name[:-4] + "_label.tif",
-                    save_image_path,
-                    "RGB")
+# def merge_rssrai_test_label_images(image_path, save_image_path):
+#     import pandas as pd
+#     df = pd.read_csv("test_name_list.csv")
+#     name_list = df['name'].tolist()
+#     for name in tqdm(name_list):
+#         merge_image(image_path,
+#                     name[:-4] + "_label.tif",
+#                     save_image_path,
+#                     "RGB")
 
 
 def save_test_image(self, name_list, output):

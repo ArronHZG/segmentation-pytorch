@@ -18,7 +18,7 @@ def read_csv(path):
 
 
 class Xian(data.Dataset):
-    NUM_CLASSES = 22
+    NUM_CLASSES = 5
 
     def __init__(self, mode, base_size, crop_size, basic_dir):
 
@@ -49,6 +49,7 @@ class Xian(data.Dataset):
             self._image_dir = os.path.join(self._base_dir, 'image')
             self._label_dir = os.path.join(self._base_dir, 'label')
             self.len = len(self.name_list)
+
     def __getitem__(self, index, is_save=False):
 
         sample = self.transform(self.get_numpy_image(index), is_save=is_save)
