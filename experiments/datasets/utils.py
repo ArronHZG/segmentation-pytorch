@@ -1,18 +1,33 @@
+# cython: language_level=3
 import numpy as np
 
-from experiments.datasets import VOCSegmentation, Rssrai, Xian
+from experiments.datasets import VOCSegmentation, Rssrai, Xian, Cloud
 
 
 def make_data_loader(dataset_name, base_size, crop_size, basic_dir):
+    print(dataset_name)
+    if dataset_name == 'cloud':
+        train_set = Cloud(mode='train',
+                          base_size=base_size,
+                          crop_size=crop_size,
+                          basic_dir=basic_dir)
+        val_set = Cloud(mode='val',
+                        base_size=base_size,
+                        crop_size=crop_size,
+                        basic_dir=basic_dir)
+        num_class = train_set.NUM_CLASSES
+
+        return train_set, val_set, num_class
+
     if dataset_name == 'xian':
         train_set = Xian(mode='train',
-                           base_size=base_size,
-                           crop_size=crop_size,
-                           basic_dir=basic_dir)
-        val_set = Xian(mode='val',
                          base_size=base_size,
                          crop_size=crop_size,
                          basic_dir=basic_dir)
+        val_set = Xian(mode='val',
+                       base_size=base_size,
+                       crop_size=crop_size,
+                       basic_dir=basic_dir)
         num_class = train_set.NUM_CLASSES
 
         return train_set, val_set, num_class
@@ -39,8 +54,8 @@ def make_data_loader(dataset_name, base_size, crop_size, basic_dir):
 
         return train_set, val_set, num_class
 
-    else:
-        raise NotImplementedError
+
+    raise NotImplementedError(dataset_name)
 
 
 def get_labels(label_number):

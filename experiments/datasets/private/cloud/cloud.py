@@ -1,13 +1,13 @@
 # cython: language_level=3
 import os
 import random
-from glob import glob
-import pandas as pd
 
 import albumentations as A
 import numpy as np
+import pandas as pd
 import torch
 import torch.utils.data as data
+
 from PIL import Image
 
 
@@ -18,8 +18,8 @@ def read_csv(path):
     return name_list
 
 
-class Xian(data.Dataset):
-    NUM_CLASSES = 5
+class Cloud(data.Dataset):
+    NUM_CLASSES = 2
 
     def __init__(self, mode, base_size, crop_size, basic_dir):
 

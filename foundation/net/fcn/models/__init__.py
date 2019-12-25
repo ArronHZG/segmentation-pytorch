@@ -18,7 +18,7 @@ def fcnResNet50(in_channels, pretrained):
         the original image is reduced by 32 times after the last big layer,
         and enter avgpool, fc, output image category
      1. Remove the last avgpool, fc layer
-     2. Let the fcn_models output the output of each layer,
+     2. Let the models output the output of each layer,
         which is reduced by 4 times, reduced by 8 times,
                  reduced by 16 times, and reduced by 32 times.
 
@@ -33,7 +33,7 @@ def fcnResNet101(in_channels, pretrained):
         the original image is reduced by 32 times after the last big layer,
         and enter avgpool, fc, output image category
      1. Remove the last avgpool, fc layer
-     2. Let the fcn_models output the output of each layer,
+     2. Let the models output the output of each layer,
         which is reduced by 4 times, reduced by 8 times,
                  reduced by 16 times, and reduced by 32 times.
 

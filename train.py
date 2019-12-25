@@ -1,4 +1,5 @@
 import os
+import random
 import time
 
 import matplotlib.pyplot as plt
@@ -110,7 +111,7 @@ class Trainer:
 
         print(f"=> creating optimizer '{self.args.optim}'")
         self.optimizer = get_optimizer(optim_name=self.args.optim, parameters=self.model.parameters(),
-                                       lr=self.args.lr)
+                                       lr=self.args.lr, lookahead=args.lookahead)
 
         if self.args.check_point_id is not None:
             print(f"=> reload  parameter from experiment_{self.args.check_point_id}")

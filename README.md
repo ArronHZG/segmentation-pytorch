@@ -14,6 +14,12 @@ conda install nb_conda --yes
 conda install -c conda-forge jupyter_contrib_nbextensions --yes
 
 ```
+
+[RAdam、LookAhead 双剑合璧，打造最强优化器](https://blog.csdn.net/red_stone1/article/details/101304235)
+
+[lookahead_pytorch](https://github.com/lonePatient/lookahead_pytorch)
+
+[radam](https://github.com/LiyuanLucasLiu/RAdam)
 # history
 
 2019-11-23 start paper

@@ -1,3 +1,4 @@
+# cython: language_level=3
 import torch
 from torch import nn
 from .utils import conv3x3, Flatten

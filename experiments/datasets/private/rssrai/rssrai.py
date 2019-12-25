@@ -1,3 +1,4 @@
+# cython: language_level=3
 import os
 import random
 from glob import glob

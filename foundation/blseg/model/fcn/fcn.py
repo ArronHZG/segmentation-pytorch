@@ -1,5 +1,6 @@
-import torch
+# cython: language_level=3
 from torch import nn
+
 from ..base import SegBaseModule
 
 

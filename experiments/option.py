@@ -1,7 +1,9 @@
+# cython: language_level=3
 import argparse
 import os
+import random
 from pprint import pprint
-
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 
@@ -17,7 +19,7 @@ class Options:
         parser.add_argument('--num-workers', type=int, default=8, metavar='N', help='datasets threads')
         parser.add_argument('--base-size', type=int, default=520, help='base image size (default: 520)')
         parser.add_argument('--crop-size', type=int, default=480, help='crop image size (default: 480)')
-        parser.add_argument('--pretrained', action='store_true', default=True, help='net name (default: True)')
+        parser.add_argument('--pretrained', action='store_false', default=True, help='net name (default: True)')
         parser.add_argument('--check-point-id', type=int, default=None)
 
         # training hyper params
@@ -34,6 +36,7 @@ class Options:
 
         # optimizer params
         parser.add_argument('--optim', type=str, default="SGD", help='(default: SGD)')
+        parser.add_argument('--lookahead', action='store_false', default=True, help='(lookahead)')
         parser.add_argument('--lr', type=float, default=None, metavar='LR', help='learning rate (default: auto)')
         parser.add_argument('--lr-scheduler', type=str, default='ReduceLROnPlateau',
                             help='learning rate scheduler (default: ReduceLROnPlateau)')
@@ -46,11 +49,11 @@ class Options:
         parser.add_argument('--apex', type=int, default=2, choices=[0, 1, 2, 3], help='Automatic Mixed Precision')
         parser.add_argument('--keep-batchnorm-fp32', type=str, default=None)
         parser.add_argument('--loss-scale', type=str, default=None)
-        parser.add_argument('--sync_bn', action='store_true', default=True, help='enabling apex sync BN.')
+        parser.add_argument('--sync_bn', action='store_false', default=True, help='enabling apex sync BN.')
 
         # cuda
         parser.add_argument('--gpu-ids', type=str, required=True)
-        parser.add_argument('--deterministic', action='store_false', default=False)
+        parser.add_argument('--deterministic', action='store_true', default=False)
         parser.add_argument("--local_rank", default=0, type=int)
 
         # # finetuning pre-trained net
@@ -102,9 +105,12 @@ class Options:
         cudnn.benchmark = True
         if args.deterministic:
             cudnn.benchmark = False
-            cudnn.deterministic = True
-            torch.manual_seed(args.local_rank)
             torch.set_printoptions(precision=10)
+            torch.manual_seed(1024)  # cpu
+            torch.cuda.manual_seed(1024)  # gpu
+            np.random.seed(1024)  # numpy
+            random.seed(1024)  # random and transforms
+            torch.backends.cudnn.deterministic = True  # cudnn
 
         args.distributed = False
         args.gpu = 0

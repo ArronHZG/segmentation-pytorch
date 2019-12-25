@@ -62,7 +62,7 @@ def getpy(basepath=os.path.abspath('.'), parentpath='', name='', excepts=(), cop
 #获取py列表
 module_list = list(getpy(basepath=currdir,parentpath=parentpath, excepts=(setupfile)))
 try:
-    setup(ext_modules = cythonize(module_list),script_args=["build_ext", "-b", build_dir, "-t", build_tmp_dir])
+    setup(ext_modules = cythonize(module_list, compiler_directives = {'language_level' : 3}),script_args=["build_ext", "-b", build_dir, "-t", build_tmp_dir])
 except Exception as ex:
     print("error! ", ex)
 else:

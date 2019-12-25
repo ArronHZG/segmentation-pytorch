@@ -1,5 +1,4 @@
-# A simple torch style logger
-# (C) Wei YANG 2017
+# cython: language_level=3
 from __future__ import absolute_import
 
 import matplotlib as mpl

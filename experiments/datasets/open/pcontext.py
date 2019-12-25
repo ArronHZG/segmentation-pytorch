@@ -1,3 +1,4 @@
+# cython: language_level=3
 ###########################################################################
 # Created by: Hang Zhang
 # Email: zhang.hang@rutgers.edu

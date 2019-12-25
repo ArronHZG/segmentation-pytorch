@@ -1,7 +1,8 @@
-import torch
+# cython: language_level=3
 from torch import nn
-from .utils import conv3x3, Flatten
+
 from .base import BackboneBaseModule
+from .utils import conv3x3
 
 
 def _add_stage(block, in_ch, out_ch, stride, use_se, repeat_time):

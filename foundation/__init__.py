@@ -2,7 +2,7 @@ from torch.optim import SGD, Adam
 
 from .blseg.model.pspnet import PSPNet
 from .net import *
-from .optimizer.radam import RAdam
+from .optimizer import RAdam, Lookahead
 
 
 def get_model(model_name, backbone, num_classes, in_c):
@@ -24,15 +24,19 @@ def get_model(model_name, backbone, num_classes, in_c):
     raise NotImplementedError
 
 
-def get_optimizer(optim_name, parameters, lr):
+def get_optimizer(optim_name, parameters, lr, lookahead):
+    optimizer = None
     if optim_name == 'SGD':
-        return SGD(parameters, lr, momentum=0.9, weight_decay=5e-4, nesterov=True)
+        optimizer =  SGD(parameters, lr, momentum=0.9, weight_decay=5e-4, nesterov=True)
     if optim_name == 'Adam':
-        return Adam(parameters, lr, weight_decay=5e-4)
+        optimizer =  Adam(parameters, lr, weight_decay=5e-4)
     if optim_name == 'RAdam':
-        return RAdam(parameters, lr, weight_decay=5e-4)
-    raise NotImplementedError
-
+        optimizer =  RAdam(parameters, lr, weight_decay=5e-4)
+    if not optimizer:
+        raise NotImplementedError
+    if lookahead:
+        optimizer = Lookahead(optimizer=optimizer, k=5, alpha=0.5)
+    return optimizer
 
 def count_param(model):
     param_count = 0

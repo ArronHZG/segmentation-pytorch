@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from .fcn_models import getBackBone
+from .models import getBackBone
 
 
 class FCNHead(nn.Sequential):

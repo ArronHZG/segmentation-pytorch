@@ -1,3 +1,4 @@
+# cython: language_level=3
 import torch
 import torch.nn.functional as F
 from torch import nn
