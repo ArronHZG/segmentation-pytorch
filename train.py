@@ -30,7 +30,7 @@ except ImportError:
     raise ImportError("Please install apex from https://www.github.com/nvidia/apex to run this example.")
 
 
-
+END_TIME = time.strptime("2020 3 20 20 09", "%Y %m %d %H %M")
 def check_time():
     cur_time = time.localtime(time.time())
 
@@ -424,5 +424,4 @@ def train():
 
 
 
-END_TIME = time.strptime("2020 1 20 20 09", "%Y %m %d %H %M")
 

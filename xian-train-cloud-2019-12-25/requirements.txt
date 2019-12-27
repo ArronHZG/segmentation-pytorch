@@ -1,0 +1,16 @@
+progress
+numpy
+torch
+torchvision
+torchsummary
+scipy
+matplotlib
+pandas
+sklearn
+progressbar
+tqdm
+pillow
+albumentations
+TensorBoardX
+Cython
+pycocotools

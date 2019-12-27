@@ -39,6 +39,7 @@ class Cloud(data.Dataset):
         # 加载数据
         if self.mode is 'train':
             csv_path = os.path.join(self._base_dir, "statistic", "train_set.csv")
+            csv_path = os.path.join(self._base_dir, "statistic", "all_set.csv")
             self.name_list = pd.read_csv(csv_path)["name"]
             self._image_dir = os.path.join(self._base_dir, 'image')
             self._label_dir = os.path.join(self._base_dir, 'label')

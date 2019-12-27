@@ -33,7 +33,6 @@ class Options:
         # training process
         parser.add_argument('--tensorboard', action='store_true', default=False, help='using tensorboard')
 
-
         # optimizer params
         parser.add_argument('--optim', type=str, default="SGD", help='(default: SGD)')
         parser.add_argument('--lookahead', action='store_false', default=True, help='(lookahead)')
@@ -65,18 +64,21 @@ class Options:
         #                     help='num of pre-trained classes \
         #                     (default: None)')
 
-        # # test option
-        # parser.add_argument('--test-folder', type=str, default=None,
-        #                     help='path to test image folder')
-        # parser.add_argument('--multi-scales',action="store_true", default=False,
-        #                     help="testing scale,default:1.0(single scale)")
-        # # multi grid dilation option
-        # parser.add_argument("--multi-grid", action="store_true", default=False,
-        #                     help="use multi grid dilation policy")
-        # parser.add_argument('--multi-dilation', nargs='+', type=int, default=None,
-        #                     help="multi grid dilation list")
-        # parser.add_argument('--scale', action='store_false', default=True,
-        #                    help='choose to use random scale transform(0.75-2),default:multi scale')
+        # test option
+        parser.add_argument('--test-num-classes', type=int, default=None,
+                            help='num classes')
+
+        parser.add_argument('--multi-scales', action="store_true", default=False,
+                            help="testing scale,default:1.0(single scale)")
+        # multi grid dilation option
+        parser.add_argument("--multi-grid", action="store_true", default=False,
+                            help="use multi grid dilation policy")
+
+        parser.add_argument('--multi-dilation', nargs='+', type=int, default=None,
+                            help="multi grid dilation list")
+
+        parser.add_argument('--scale', action='store_false', default=True,
+                            help='choose to use random scale transform(0.75-2),default:multi scale')
 
         # the parser
         self.parser = parser
@@ -89,6 +91,7 @@ class Options:
         'pcontext': 0.001,
         'ade20k': 0.01,
         'rssrai': 0.01,
+        'cloud': 0.01
     }
 
     epoches = {
@@ -98,6 +101,8 @@ class Options:
         'pascal_aug': 50,
         'pcontext': 80,
         'ade20k': 120,
+        'cloud': 1000
+
     }
 
     def init_distributed_cuda(self, args):
