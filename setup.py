@@ -9,7 +9,7 @@
     python py-setup.py BigoModel
 
 生成结果：
-    目录 build 下
+    目录 xian-test-cloud-2019-12-27 下
 
 生成完成后：
     启动文件还需要py/pyc担当，须将启动的py/pyc拷贝到编译目录并删除so文件
@@ -24,7 +24,7 @@ starttime = time.time()
 currdir = os.path.abspath('.')
 parentpath = sys.argv[1] if len(sys.argv)>1 else ""
 setupfile= os.path.join(os.path.abspath('.'), __file__)
-build_dir = "build"
+build_dir = "xian-test-cloud-2019-12-27"
 build_tmp_dir = build_dir + "/temp"
 
 def getpy(basepath=os.path.abspath('.'), parentpath='', name='', excepts=(), copyOther=False, delC=False):

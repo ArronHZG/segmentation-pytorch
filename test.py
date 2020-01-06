@@ -89,7 +89,6 @@ class Tester:
             testOneImage.fill_image(sample)
             del image
             gc.collect()
-            break
         del dateLoader
         gc.collect()
         output = testOneImage.output_image
